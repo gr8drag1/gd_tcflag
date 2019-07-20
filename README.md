@@ -131,7 +131,12 @@ Miscellaneous
   <ul>
    <li><b>gd_tcflag.tcstatfl.bytecount_A</b> : Number of payload bytes received from A</li>
    <li><b>gd_tcflag.tcstatfl.bytecount_B</b> : Number of payload bytes received from B</li>
-   <li><b>gd_tcflag.tcstatfl.byteratio</b> : Ratio of payload bytes, dB (logarithmic, between 0 and 100)</li>
+   <li><b>gd_tcflag.tcstatfl.byteratio</b> : Ratio of payload bytes, dB (logarithmic, between 0 and 100)
+    <ul>
+     <li>If the actual ratio value is higher, it it capped at 100 dB still</li>
+     <li>Values close to 0 dB mean that each endpoint sent an approximately equal number of payload bytes</li>
+     <li>By the nature of the scale, each 3 dB approximately equals to two times the difference. Each 10 dB represents an order of magnitude difference</li>
+   </li>
   </ul>
  </li>
 </ul>
