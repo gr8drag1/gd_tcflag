@@ -71,37 +71,37 @@ Composed of the following boolean flags:
 <p>
 TCP payload gone missing
  <ul>
-  <li>gd_tcflag.tcanflcn.ooo : <b>tcp.analysis.out_of_order</b></li>
-  <li>gd_tcflag.tcanflcn.rtr : <b>tcp.analysis.retransmission</b></li>
-  <li>gd_tcflag.tcanflcn.frtr : <b>tcp.analysis.fast_retransmission</b></li>
-  <li>gd_tcflag.tcanflcn.srtr : <b>tcp.analysis.spurious_retransmission</b></li>
-  <li>gd_tcflag.tcanflcn.dack : <b>tcp.analysis.duplicate_ack_num</b></li>
-  <li>gd_tcflag.tcanflcn.losg : <b>tcp.analysis.lost_segment</b></li>
+  <li>gd_tcflag.tcanflcn.ooo : Number of frames flagged with <b>tcp.analysis.out_of_order</b></li>
+  <li>gd_tcflag.tcanflcn.rtr : Number of frames flagged with <b>tcp.analysis.retransmission</b></li>
+  <li>gd_tcflag.tcanflcn.frtr : Number of frames flagged with <b>tcp.analysis.fast_retransmission</b></li>
+  <li>gd_tcflag.tcanflcn.srtr : Number of frames flagged with <b>tcp.analysis.spurious_retransmission</b></li>
+  <li>gd_tcflag.tcanflcn.dack : Number of frames flagged with <b>tcp.analysis.duplicate_ack_num</b></li>
+  <li>gd_tcflag.tcanflcn.losg : Number of frames flagged with <b>tcp.analysis.lost_segment</b></li>
  </ul>
 </p>
 
 <p>
 TCP window flow control
 <ul>
- <li>gd_tcflag.tcanflcn.wful : <b>tcp.analysis.window_full</b></li>
- <li>gd_tcflag.tcanflcn.wupd : <b>tcp.analysis.window_update</b></li>
- <li>gd_tcflag.tcanflcn.zwin : <b>tcp.analysis.zero_window</b></li>
- <li>gd_tcflag.tcanflcn.zwp : <b>tcp.analysis.zero_window_probe</b></li>
- <li>gd_tcflag.tcanflcn.zwpa : <b>tcp.analysis.zero_window_probe_ack</b></li>
+ <li>gd_tcflag.tcanflcn.wful : Number of frames flagged with <b>tcp.analysis.window_full</b></li>
+ <li>gd_tcflag.tcanflcn.wupd : Number of frames flagged with <b>tcp.analysis.window_update</b></li>
+ <li>gd_tcflag.tcanflcn.zwin : Number of frames flagged with <b>tcp.analysis.zero_window</b></li>
+ <li>gd_tcflag.tcanflcn.zwp : Number of frames flagged with <b>tcp.analysis.zero_window_probe</b></li>
+ <li>gd_tcflag.tcanflcn.zwpa : Number of frames flagged with <b>tcp.analysis.zero_window_probe_ack</b></li>
 </ul>
 </p>
 
 <p>
 TCP keep-alive
 <ul>
- <li>gd_tcflag.tcanflcn.ka : <b>tcp.analysis.keep_alive</b></li>
- <li>gd_tcflag.tcanflcn.kaa : <b>tcp.analysis.keep_alive_ack</b></li>
+ <li>gd_tcflag.tcanflcn.ka : Number of frames flagged with <b>tcp.analysis.keep_alive</b></li>
+ <li>gd_tcflag.tcanflcn.kaa : Number of frames flagged with <b>tcp.analysis.keep_alive_ack</b></li>
 </ul>
 </p>
 
 <p>
 Miscellaneous
-<ul><li>gd_tcflag.tcanflcn.rusp : <b>tcp.analysis.reused_ports</b></li></ul>
+<ul><li>gd_tcflag.tcanflcn.rusp : Number of frames flagged with <b>tcp.analysis.reused_ports</b></li></ul>
 </p>
 
 <h2>Protocol statistics counters subsection, <i>gd_tcflag.tcstatf</i></h2>
