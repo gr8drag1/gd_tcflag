@@ -2,10 +2,10 @@
 
 <p>
 A Wireshark Lua post-dissector for express analysis of TCP conversations.<br>
-The TCP conversation is tracked for endpoint A and B individually. The decision which side is A and B is performed as follows:
+Each conversation endpoint, A and B, is tracked individually. The decision which side is A and B is performed as follows:
 <ul>
- <li>If one TCP port is numerically smaller than the other, then the smaller port is A and the greater port is B</li>
- <li>If the port values are identical, then A is the numerically smaller IP address</li>
+ <li>If one TCP port is numerically less than the other, then the lesser port is A and the greater port is B</li>
+ <li>If the port values are identical, then A is the numerically lesser IP address</li>
 </ul>
 The post-dissector creates its own section with three subsections.
 </p>
