@@ -15,5 +15,6 @@
 <th>r14</th><td>Allow multiple passes in TCP analysis tracking</td></tr>
 <th>r15</th><td>Added TCP analysis differentiation between peers</td></tr>
 <th>r16</th><td>Added statistics section</td></tr>
+<tr><th>r17</th><td>Sections activation made configurable</td></tr>
 </tbody>
 </table>
