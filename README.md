@@ -10,7 +10,7 @@ The TCP conversation is tracked for endpoint A and B individually. The decision 
 The post-dissector creates its own section with three subsections.
 </p>
 
-<h2>Protocol flags <b>gd_tcflag.tcbm</p> subsection</h2>
+<h2>Protocol flags <b>gd_tcflag.tcbm</b> subsection</h2>
     
 <p>
 Composed of the following boolean flags:
