@@ -10,7 +10,7 @@ The TCP conversation is tracked for endpoint A and B individually. The decision 
 The post-dissector creates its own section with three subsections.
 </p>
 
-<h2>Protocol flags subsection, <b>gd_tcflag.tcbm</b></h2>
+<h2>Protocol flags subsection, <u>gd_tcflag.tcbm</u></h2>
     
 <p>
 Composed of the following boolean flags:
@@ -66,51 +66,51 @@ Composed of the following boolean flags:
 </ul>
 </p>
 
-<h2>Protocol analysis counters subsection, <b>gd_tcflag.tcanflcn</b></h2>
+<h2>Protocol analysis counters subsection, <u>gd_tcflag.tcanflcn</u></h2>
 
 <p>
 TCP payload gone missing
  <ul>
-  <li>gd_tcflag.tcanflcn.ooo : tcp.analysis.out_of_order</li>
-  <li>gd_tcflag.tcanflcn.rtr : tcp.analysis.retransmission</li>
-  <li>gd_tcflag.tcanflcn.frtr : tcp.analysis.fast_retransmission</li>
-  <li>gd_tcflag.tcanflcn.srtr : tcp.analysis.spurious_retransmission</li>
-  <li>gd_tcflag.tcanflcn.dack : tcp.analysis.duplicate_ack_num</li>
-  <li>gd_tcflag.tcanflcn.losg : tcp.analysis.lost_segment</li>
+  <li>gd_tcflag.tcanflcn.ooo : <b>tcp.analysis.out_of_order</b></li>
+  <li>gd_tcflag.tcanflcn.rtr : <b>tcp.analysis.retransmission</b></li>
+  <li>gd_tcflag.tcanflcn.frtr : <b>tcp.analysis.fast_retransmission</b></li>
+  <li>gd_tcflag.tcanflcn.srtr : <b>tcp.analysis.spurious_retransmission</b></li>
+  <li>gd_tcflag.tcanflcn.dack : <b>tcp.analysis.duplicate_ack_num</b></li>
+  <li>gd_tcflag.tcanflcn.losg : <b>tcp.analysis.lost_segment</b></li>
  </ul>
 </p>
 
 <p>
 TCP window flow control
 <ul>
- <li>gd_tcflag.tcanflcn.wful : tcp.analysis.window_full</li>
- <li>gd_tcflag.tcanflcn.wupd : tcp.analysis.window_update</li>
- <li>gd_tcflag.tcanflcn.zwin : tcp.analysis.zero_window</li>
- <li>gd_tcflag.tcanflcn.zwp : tcp.analysis.zero_window_probe</li>
- <li>gd_tcflag.tcanflcn.zwpa : tcp.analysis.zero_window_probe_ack</li>
+ <li>gd_tcflag.tcanflcn.wful : <b>tcp.analysis.window_full</b></li>
+ <li>gd_tcflag.tcanflcn.wupd : <b>tcp.analysis.window_update</b></li>
+ <li>gd_tcflag.tcanflcn.zwin : <b>tcp.analysis.zero_window</b></li>
+ <li>gd_tcflag.tcanflcn.zwp : <b>tcp.analysis.zero_window_probe</b></li>
+ <li>gd_tcflag.tcanflcn.zwpa : <b>tcp.analysis.zero_window_probe_ack</b></li>
 </ul>
 </p>
 
 <p>
 TCP keep-alive
 <ul>
- <li>gd_tcflag.tcanflcn.ka : tcp.analysis.keep_alive</li>
- <li>gd_tcflag.tcanflcn.kaa : tcp.analysis.keep_alive_ack</li>
+ <li>gd_tcflag.tcanflcn.ka : <b>tcp.analysis.keep_alive</b></li>
+ <li>gd_tcflag.tcanflcn.kaa : <b>tcp.analysis.keep_alive_ack</b></li>
 </ul>
 </p>
 
 <p>
 Miscellaneous
-<ul><li>gd_tcflag.tcanflcn.rusp : tcp.analysis.reused_ports</li></ul>
+<ul><li>gd_tcflag.tcanflcn.rusp : <b>tcp.analysis.reused_ports</b></li></ul>
 </p>
 
-<h2>Protocol statistics counters subsection, <b>gd_tcflag.tcstatf</b></h2>
+<h2>Protocol statistics counters subsection, <u>gd_tcflag.tcstatf</u></h2>
 
 <p>
  <ul>
-  <li>gd_tcflag.tcstatfl.duration : TCP stream duration</li>
-  <li>gd_tcflag.tcstatfl.begin : First frame of the TCP stream</li>
-  <li>gd_tcflag.tcstatfl.end : Last frame of the TCP stream</li>
+  <li><b>gd_tcflag.tcstatfl.duration</b> : TCP stream duration</li>
+  <li><b>gd_tcflag.tcstatfl.begin</b> : First frame of the TCP stream</li>
+  <li><b>gd_tcflag.tcstatfl.end</b> : Last frame of the TCP stream</li>
  </ul>
 </p>
 
@@ -118,19 +118,23 @@ Miscellaneous
  <ul>
   <li>gd_tcflag.tcstatfl.framcount : Total number of frames
    <ul>
-    <li>gd_tcflag.tcstatfl.framcount_A : Number of frames received from A</li>
-    <li>gd_tcflag.tcstatfl.framcount_B : Number of frames received from B</li>
+    <li><b>gd_tcflag.tcstatfl.framcount_A</b> : Number of frames received from A</li>
+    <li><b>gd_tcflag.tcstatfl.framcount_B</b> : Number of frames received from B</li>
    </ul>
-  </ul>
+  </li> 
+ </ul>
 </p>
 
 <p>
-gd_tcflag.tcstatfl.bytecount : Total number of payload bytes
- <ul>
-  <li>gd_tcflag.tcstatfl.bytecount_A : Number of payload bytes received from A</li>
-  <li>      gd_tcflag.tcstatfl.bytecount_B : Number of payload bytes received from B</li>
-  <li>      gd_tcflag.tcstatfl.byteratio : Ratio of payload bytes, dB (logarithmic, between 0 and 100)</li>
- </ul>
+<ul>
+ <li>gd_tcflag.tcstatfl.bytecount : Total number of payload bytes
+  <ul>
+   <li><b>gd_tcflag.tcstatfl.bytecount_A</b> : Number of payload bytes received from A</li>
+   <li><b>gd_tcflag.tcstatfl.bytecount_B</b> : Number of payload bytes received from B</li>
+   <li><b>gd_tcflag.tcstatfl.byteratio</b> : Ratio of payload bytes, dB (logarithmic, between 0 and 100)</li>
+  </ul>
+ </li>
+</ul>
 </p>
 
 <h2>Known limitations</h2>
