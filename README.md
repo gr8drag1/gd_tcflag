@@ -104,7 +104,7 @@ Miscellaneous
 <ul><li><i>gd_tcflag.tcanflcn.rusp</i> : Number of frames flagged with <b>tcp.analysis.reused_ports</b></li></ul>
 </p>
 
-<h2>Protocol statistics counters subsection, <i>gd_tcflag.tcstatf</i></h2>
+<h2>Protocol statistics counters subsection, <i>gd_tcflag.tcstatfl</i></h2>
 
 <p>
  <ul>
