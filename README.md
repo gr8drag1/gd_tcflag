@@ -23,44 +23,44 @@ Composed of the following boolean flags:
  </li>
  <li><b>gd_tcflag.tcbm.SnA</b> : either gd_tcflag.tcbm.SnAA or gd_tcflag.tcbm.SnAB
   <blockquote>
-  [4] gd_tcflag.tcbm.SnAA : peer A sent flags Syn+Ack<br>
-  [8] gd_tcflag.tcbm.SnAB : peer B sent flags Syn+Ack
+  <sup>[4]</sup> gd_tcflag.tcbm.SnAA : peer A sent flags Syn+Ack<br>
+  <sup>[8]</sup> gd_tcflag.tcbm.SnAB : peer B sent flags Syn+Ack
   </blockquote>
  </li>
  <li><b>gd_tcflag.tcbm.Ack</b> : either gd_tcflag.tcbm.AckA or gd_tcflag.tcbm.AckB
   <blockquote>
-  [16] gd_tcflag.tcbm.AckA : peer A sent flag Ack (with no data payload)<br>
-  [32] gd_tcflag.tcbm.AckB : peer B sent flag Ack (with no data payload)
+  <sup>[16]</sup> gd_tcflag.tcbm.AckA : peer A sent flag Ack (with no data payload)<br>
+  <sup>[32]</sup> gd_tcflag.tcbm.AckB : peer B sent flag Ack (with no data payload)
   </blockquote>
 </li>
  <li><b>gd_tcflag.tcbm.Dat</b> : either gd_tcflag.tcbm.DatA or gd_tcflag.tcbm.DatB
   <blockquote>
-  [64] gd_tcflag.tcbm.DatA : peer A sent a TCP segment containing data payload<br>
-  [128] gd_tcflag.tcbm.DatB : peer B sent a TCP segment containing data payload
+  <sup>[64]</sup> gd_tcflag.tcbm.DatA : peer A sent a TCP segment containing data payload<br>
+  <sup>[128]</sup> gd_tcflag.tcbm.DatB : peer B sent a TCP segment containing data payload
   </blockquote>
  </li>
  <li><b>gd_tcflag.tcbm.MTUgt1500</b> : either gd_tcflag.tcbm.MTUgt1500A or gd_tcflag.tcbm.MTUgt1500B
   <blockquote>
-   [256] gd_tcflag.tcbm.MTUgt1500A : peer A sent an IP packet longer than 1500 B<br>
-   [512] gd_tcflag.tcbm.MTUgt1500B : peer B sent an IP packet longer than 1500 B
+   <sup>[256]</sup> gd_tcflag.tcbm.MTUgt1500A : peer A sent an IP packet longer than 1500 B<br>
+   <sup>[512]</sup> gd_tcflag.tcbm.MTUgt1500B : peer B sent an IP packet longer than 1500 B
   </blockquote>
  </li>
  <li><b>gd_tcflag.tcbm.fragment</b> : either gd_tcflag.tcbm.fragmentA or gd_tcflag.tcbm.fragmentB
   <blockquote>
-    [1024] gd_tcflag.tcbm.fragmentA : peer A sent a IP packet with MF (more fragments) flag set<br>
-    [2048] gd_tcflag.tcbm.fragmentB : peer B sent a IP packet with MF (more fragments) flag set
+    <sup>[1024]</sup> gd_tcflag.tcbm.fragmentA : peer A sent a IP packet with MF (more fragments) flag set<br>
+    <sup>[2048]</sup> gd_tcflag.tcbm.fragmentB : peer B sent a IP packet with MF (more fragments) flag set
   </blockquote>
  </li>
  <li><b>gd_tcflag.tcbm.Fin</b> : either gd_tcflag.tcbm.FinA or gd_tcflag.tcbm.FinB
   <blockquote>
-   [4096] gd_tcflag.tcbm.FinA : peer A sent flag Fin<br>
-   [8192] gd_tcflag.tcbm.FinB : peer B sent flag Fin
+   <sup>[4096]</sup> gd_tcflag.tcbm.FinA : peer A sent flag Fin<br>
+   <sup>[8192]</sup> gd_tcflag.tcbm.FinB : peer B sent flag Fin
   </blockquote>
  </li>
  <li><b>gd_tcflag.tcbm.Rst</b> : either gd_tcflag.tcbm.RstA or gd_tcflag.tcbm.RstB
   <blockquote>
-   [16384] gd_tcflag.tcbm.RstA : peer A sent flag Rst<br>
-   [32768] gd_tcflag.tcbm.RstB : peer B sent flag Rst
+   <sup>[16384]</sup> gd_tcflag.tcbm.RstA : peer A sent flag Rst<br>
+   <sup>[32768]</sup> gd_tcflag.tcbm.RstB : peer B sent flag Rst
   </blockquote>
  </li>
 </ul>
