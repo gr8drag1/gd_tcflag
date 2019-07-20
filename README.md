@@ -17,8 +17,8 @@ Composed of the following boolean flags:
 <ul>
  <li><b>gd_tcflag.tcbm.Syn</b> : either gd_tcflag.tcbm.SynA or gd_tcflag.tcbm.SynB
   <blockquote>
-  [1] gd_tcflag.tcbm.SynA : peer A sent flag Syn<br>
-  [2] gd_tcflag.tcbm.SynB : peer B sent flag Syn
+  <sup>[1]</sup> gd_tcflag.tcbm.SynA : peer A sent flag Syn<br>
+  <sup>[2]</sup> gd_tcflag.tcbm.SynB : peer B sent flag Syn
   </blockquote>
  </li>
  <li><b>gd_tcflag.tcbm.SnA</b> : either gd_tcflag.tcbm.SnAA or gd_tcflag.tcbm.SnAB
