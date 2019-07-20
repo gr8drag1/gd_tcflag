@@ -1,4 +1,4 @@
-<h1><b>gd_tcflag</b> Wireshark Lua (wslua) post-dissector plugin</h1>
+<h1><b>gd_tcflag</b> Wireshark Lua (wslua) post-dissector plug-in</h1>
 
 <p>
 A Wireshark Lua post-dissector for express analysis of TCP conversations.<br>
