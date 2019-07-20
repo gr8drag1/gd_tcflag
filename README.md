@@ -71,37 +71,37 @@ Composed of the following boolean flags:
 <p>
 TCP payload gone missing
  <ul>
-  <li><u>gd_tcflag.tcanflcn.ooo</u> : Number of frames flagged with <b>tcp.analysis.out_of_order</b></li>
-  <li><u>gd_tcflag.tcanflcn.rtr</u> : Number of frames flagged with <b>tcp.analysis.retransmission</b></li>
-  <li><u>gd_tcflag.tcanflcn.frtr</u> : Number of frames flagged with <b>tcp.analysis.fast_retransmission</b></li>
-  <li><u>gd_tcflag.tcanflcn.srtr</u> : Number of frames flagged with <b>tcp.analysis.spurious_retransmission</b></li>
-  <li><u>gd_tcflag.tcanflcn.dack</u> : Number of frames flagged with <b>tcp.analysis.duplicate_ack_num</b></li>
-  <li><u>gd_tcflag.tcanflcn.losg</u> : Number of frames flagged with <b>tcp.analysis.lost_segment</b></li>
+  <li><i>gd_tcflag.tcanflcn.ooo</i> : Number of frames flagged with <b>tcp.analysis.out_of_order</b></li>
+  <li><i>gd_tcflag.tcanflcn.rtr</i> : Number of frames flagged with <b>tcp.analysis.retransmission</b></li>
+  <li><i>gd_tcflag.tcanflcn.frtr</i> : Number of frames flagged with <b>tcp.analysis.fast_retransmission</b></li>
+  <li><i>gd_tcflag.tcanflcn.srtr</i> : Number of frames flagged with <b>tcp.analysis.spurious_retransmission</b></li>
+  <li><i>gd_tcflag.tcanflcn.dack</i> : Number of frames flagged with <b>tcp.analysis.duplicate_ack_num</b></li>
+  <li><i>gd_tcflag.tcanflcn.losg</i> : Number of frames flagged with <b>tcp.analysis.lost_segment</b></li>
  </ul>
 </p>
 
 <p>
 TCP window flow control
 <ul>
- <li><u>gd_tcflag.tcanflcn.wful</u> : Number of frames flagged with <b>tcp.analysis.window_full</b></li>
- <li><u>gd_tcflag.tcanflcn.wupd</u> : Number of frames flagged with <b>tcp.analysis.window_update</b></li>
- <li><u>gd_tcflag.tcanflcn.zwin</u> : Number of frames flagged with <b>tcp.analysis.zero_window</b></li>
- <li><u>gd_tcflag.tcanflcn.zwp</u> : Number of frames flagged with <b>tcp.analysis.zero_window_probe</b></li>
- <li><u>gd_tcflag.tcanflcn.zwpa</u> : Number of frames flagged with <b>tcp.analysis.zero_window_probe_ack</b></li>
+ <li><i>gd_tcflag.tcanflcn.wful</i> : Number of frames flagged with <b>tcp.analysis.window_full</b></li>
+ <li><i>gd_tcflag.tcanflcn.wupd</i> : Number of frames flagged with <b>tcp.analysis.window_update</b></li>
+ <li><i>gd_tcflag.tcanflcn.zwin</i> : Number of frames flagged with <b>tcp.analysis.zero_window</b></li>
+ <li><i>gd_tcflag.tcanflcn.zwp</i> : Number of frames flagged with <b>tcp.analysis.zero_window_probe</b></li>
+ <li><i>gd_tcflag.tcanflcn.zwpa</i> : Number of frames flagged with <b>tcp.analysis.zero_window_probe_ack</b></li>
 </ul>
 </p>
 
 <p>
 TCP keep-alive
 <ul>
- <li><u>gd_tcflag.tcanflcn.ka</u> : Number of frames flagged with <b>tcp.analysis.keep_alive</b></li>
- <li><u>gd_tcflag.tcanflcn.kaa</u> : Number of frames flagged with <b>tcp.analysis.keep_alive_ack</b></li>
+ <li><i>gd_tcflag.tcanflcn.ka</i> : Number of frames flagged with <b>tcp.analysis.keep_alive</b></li>
+ <li><i>gd_tcflag.tcanflcn.kaa</i> : Number of frames flagged with <b>tcp.analysis.keep_alive_ack</b></li>
 </ul>
 </p>
 
 <p>
 Miscellaneous
-<ul><li><u>gd_tcflag.tcanflcn.rusp</u> : Number of frames flagged with <b>tcp.analysis.reused_ports</b></li></ul>
+<ul><li><i>gd_tcflag.tcanflcn.rusp</i> : Number of frames flagged with <b>tcp.analysis.reused_ports</b></li></ul>
 </p>
 
 <h2>Protocol statistics counters subsection, <i>gd_tcflag.tcstatf</i></h2>
@@ -118,8 +118,8 @@ Miscellaneous
  <ul>
   <li><b>gd_tcflag.tcstatfl.framcount</b> : Total number of frames
    <ul>
-    <li><u>gd_tcflag.tcstatfl.framcount_A</u> : Number of frames received from A</li>
-    <li><u>gd_tcflag.tcstatfl.framcount_B</u> : Number of frames received from B</li>
+    <li><i>gd_tcflag.tcstatfl.framcount_A</i> : Number of frames received from A</li>
+    <li><i>gd_tcflag.tcstatfl.framcount_B</i> : Number of frames received from B</li>
    </ul>
   </li> 
  </ul>
@@ -129,8 +129,8 @@ Miscellaneous
 <ul>
  <li><b>gd_tcflag.tcstatfl.bytecount</b> : Total number of payload bytes
   <ul>
-   <li><u>gd_tcflag.tcstatfl.bytecount_A</u> : Number of payload bytes received from A</li>
-   <li><u>gd_tcflag.tcstatfl.bytecount_B</u> : Number of payload bytes received from B</li>
+   <li><i>gd_tcflag.tcstatfl.bytecount_A</i> : Number of payload bytes received from A</li>
+   <li><i>gd_tcflag.tcstatfl.bytecount_B</i> : Number of payload bytes received from B</li>
    <li><b>gd_tcflag.tcstatfl.byteratio</b> : Ratio of payload bytes, dB (logarithmic, between 0 and 100)
     <ul>
      <li>If the actual ratio value is higher, it it capped at 100 dB still</li>
