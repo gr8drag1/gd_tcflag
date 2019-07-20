@@ -10,7 +10,7 @@ The TCP conversation is tracked for endpoint A and B individually. The decision 
 The post-dissector creates its own section with three subsections.
 </p>
 
-<h2>Protocol flags subsection, <u>gd_tcflag.tcbm</u></h2>
+<h2>Protocol flags subsection, <i>gd_tcflag.tcbm</i></h2>
     
 <p>
 Composed of the following boolean flags:
@@ -66,7 +66,7 @@ Composed of the following boolean flags:
 </ul>
 </p>
 
-<h2>Protocol analysis counters subsection, <u>gd_tcflag.tcanflcn</u></h2>
+<h2>Protocol analysis counters subsection, <i>gd_tcflag.tcanflcn</i></h2>
 
 <p>
 TCP payload gone missing
@@ -104,7 +104,7 @@ Miscellaneous
 <ul><li>gd_tcflag.tcanflcn.rusp : <b>tcp.analysis.reused_ports</b></li></ul>
 </p>
 
-<h2>Protocol statistics counters subsection, <u>gd_tcflag.tcstatf</u></h2>
+<h2>Protocol statistics counters subsection, <i>gd_tcflag.tcstatf</i></h2>
 
 <p>
  <ul>
