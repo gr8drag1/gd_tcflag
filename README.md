@@ -146,9 +146,10 @@ Believed fundamental to the architecture of the host code
 <p>
 <ul>
  <li>TCP stream numbering. The decision between whether a frame belongs to an existing TCP stream or to a new one belongs to the TCP protocol dissector</li>
-</ul>
-Wireshark (GUI) parses the loaded packet trace digressing during the second pass [displaying the packets updated by these digressions], while tshark (CLI) performs the second pass [explicitly enforced with option <b>-2</b>] linearly. As a result:
+  <li>Wireshark (GUI) parses the loaded packet trace digressing during the second pass [displaying the packets updated by these digressions], while tshark (CLI) performs the second pass [explicitly enforced with option <b>-2</b>] linearly. As a result:
 <ul>
  <li>In the GUI gd_tcflag values always covers the complete TCP stream and it is immediately possible to see whether the respective TCP stream contained any Syn, data payload, Fin or Rst by looking at any arbitrary TCP segment of the stream</li>
  <li>In the CLI gd_tcflag values may be accumulating over the lifetime of the TCP stream registering new events with only the last TCP segment of the stream is guaranteed to contain the complete record</li>
 </ul>
+ </li>
+ </ul>
