@@ -57,7 +57,7 @@ Composed of the following boolean flags:
    [8192] gd_tcflag.tcbm.FinB : peer B sent flag Fin
   </blockquote>
  </li>
- <li><b>gd_tcflag.tcbm.Rst<b> : either gd_tcflag.tcbm.RstA or gd_tcflag.tcbm.RstB
+ <li><b>gd_tcflag.tcbm.Rst</b> : either gd_tcflag.tcbm.RstA or gd_tcflag.tcbm.RstB
   <blockquote>
    [16384] gd_tcflag.tcbm.RstA : peer A sent flag Rst<br>
    [32768] gd_tcflag.tcbm.RstB : peer B sent flag Rst
