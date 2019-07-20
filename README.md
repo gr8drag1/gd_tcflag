@@ -10,7 +10,7 @@ The TCP conversation is tracked for endpoint A and B individually. The decision 
 The post-dissector creates its own section with three subsections.
 </p>
 
-<h2>Protocol flags <b>gd_tcflag.tcbm</b> subsection</h2>
+<h2>Protocol flags subsection, <b>gd_tcflag.tcbm</b></h2>
     
 <p>
 Composed of the following boolean flags:
@@ -66,7 +66,7 @@ Composed of the following boolean flags:
 </ul>
 </p>
 
-<h2>Protocol analysis counters <b>gd_tcflag.tcanflcn</b> subsection</h2>
+<h2>Protocol analysis counters subsection, <b>gd_tcflag.tcanflcn</b></h2>
 
 <p>
 TCP payload gone missing
@@ -104,25 +104,33 @@ Miscellaneous
 <ul><li>gd_tcflag.tcanflcn.rusp : tcp.analysis.reused_ports</li></ul>
 </p>
 
-<h2>Protocol statistics counters <b>gd_tcflag.tcstatf</b> subsection</h2>
+<h2>Protocol statistics counters subsection, <b>gd_tcflag.tcstatf</b></h2>
 
 <p>
-    gd_tcflag.tcstatfl.duration : TCP stream duration
-    gd_tcflag.tcstatfl.begin : First frame of the TCP stream
-    gd_tcflag.tcstatfl.end : Last frame of the TCP stream
+ <ul>
+  <li>gd_tcflag.tcstatfl.duration : TCP stream duration</li>
+  <li>gd_tcflag.tcstatfl.begin : First frame of the TCP stream</li>
+  <li>gd_tcflag.tcstatfl.end : Last frame of the TCP stream</li>
+ </ul>
 </p>
 
 <p>
-    gd_tcflag.tcstatfl.framcount : Total number of frames
-        gd_tcflag.tcstatfl.framcount_A : Number of frames received from A
-        gd_tcflag.tcstatfl.framcount_B : Number of frames received from B
+ <ul>
+  <li>gd_tcflag.tcstatfl.framcount : Total number of frames
+   <ul>
+    <li>gd_tcflag.tcstatfl.framcount_A : Number of frames received from A</li>
+    <li>gd_tcflag.tcstatfl.framcount_B : Number of frames received from B</li>
+   </ul>
+  </ul>
 </p>
 
 <p>
-    gd_tcflag.tcstatfl.bytecount : Total number of payload bytes
-        gd_tcflag.tcstatfl.bytecount_A : Number of payload bytes received from A
-        gd_tcflag.tcstatfl.bytecount_B : Number of payload bytes received from B
-        gd_tcflag.tcstatfl.byteratio : Ratio of payload bytes, dB (logarithmic, between 0 and 100)
+gd_tcflag.tcstatfl.bytecount : Total number of payload bytes
+ <ul>
+  <li>gd_tcflag.tcstatfl.bytecount_A : Number of payload bytes received from A</li>
+  <li>      gd_tcflag.tcstatfl.bytecount_B : Number of payload bytes received from B</li>
+  <li>      gd_tcflag.tcstatfl.byteratio : Ratio of payload bytes, dB (logarithmic, between 0 and 100)</li>
+ </ul>
 </p>
 
 <h2>Known limitations</h2>
