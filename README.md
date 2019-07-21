@@ -4,8 +4,12 @@
 <thead>
 <tr>
  <th>A Wireshark Lua post-dissector for express analysis of TCP conversations</th>
- <td><img src="Wireshark.png"></td></tr>
+ <td colspan-"2"><img src="Wireshark.png"></td></tr>
  </tr>
+ <tr>
+  <td>
+   Allows display filters to include complete TCP streams certain frames of which contained Syn, Syn+Ack, Fin, Rst, payload, retransmissions, zero window and etc., as well as total duration, number of frames and payload bytes<br>
+   The reverse also holds true: by examining any frame it is possible to see if the corresponding conversation had Syn, Syn+Ack, Fin, Rst, payload, retransmissions, zero window and etc., for how long the conversation lasted and how many frames and payload bytes from each endpoint were seen
 </thead>
 <tbody>
 <tr>
