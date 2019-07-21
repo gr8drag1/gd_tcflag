@@ -24,18 +24,19 @@
 -- r4 : The single flag End de-aggregated into Fin and Rst
 -- r5 : Individual flag names added to the filter syntax
 -- r6 : Counter for tracking for "tcp.analysis.flags" added
--- r7 : Added not tcp_keep_alive check to payload (Data) tracking
--- r8 : Added tracking for jumbo IP MTU and for IP fragments
+-- r7 : Check for not tcp_keep_alive added to payload (Data) tracking
+-- r8 : Tracking for jumbo IP MTU and for IP fragments added
 -- r9 : Changed IP fragments check from "ip.fragment" to "ip.flags.mf"
--- r10 : Added detalisation for r6
+-- r10 : Detalisation for r6 added
 -- r11 : Combinations like Rst+Ack no longer count as an Ack
 --       Duplicate Ack added to TCP analysis counters
 -- r12 : Simplified filter syntax for flags set on either A or B (or both)
 -- r13 : Keep counters separate for fast, spurious and plain retransmissions
--- r14 : Allow multiple passes in TCP analysis tracking
--- r15 : Added TCP analysis differentiation between peers
--- r16 : Added statistics section
--- r17 : Sections made configurable
+-- r14 : Handle multiple passes in TCP analysis tracking
+-- r15 : TCP analysis differentiation between peers added
+-- r16 : Statistics section added
+-- r17 : Sections activation made configurable
+-- r18 : Window size tracking in the TCP header added to statistics section
 -------------------------------------------------------------------------------
 
 -- Examples https://wiki.wireshark.org/Lua/Examples/PostDissector
@@ -132,6 +133,11 @@ local gd_tcstatfl_bcnt = ProtoField.new("Total payload bytes", "gd_tcflag.tcstat
 local gd_tcstatfl_bcnt_A = ProtoField.new("Bytes from A", "gd_tcflag.tcstatfl.bytecount_A", ftypes.UINT32)
 local gd_tcstatfl_bcnt_B = ProtoField.new("Bytes from B", "gd_tcflag.tcstatfl.bytecount_B", ftypes.UINT32)
 local gd_tcstatfl_bcnt_r = ProtoField.new("Payload ratio, 0..100 dB", "gd_tcflag.tcstatfl.byteratio", ftypes.FLOAT)
+local gd_tcstatfl_wmxrat = ProtoField.new("Highest win max/min, 0..100 dB", "gd_tcflag.tcstatfl.winsizratio", ftypes.FLOAT)
+local gd_tcstatfl_wmnsz_A = ProtoField.new("Minumum win from A", "gd_tcflag.tcstatfl.winsizmin_A", ftypes.UINT32)
+local gd_tcstatfl_wmnsz_B = ProtoField.new("Minumum win from B", "gd_tcflag.tcstatfl.winsizmin_B", ftypes.UINT32)
+local gd_tcstatfl_wmxsz_A = ProtoField.new("Maximum win from A", "gd_tcflag.tcstatfl.winsizmax_A", ftypes.UINT32)
+local gd_tcstatfl_wmxsz_B = ProtoField.new("Maximum win from B", "gd_tcflag.tcstatfl.winsizmax_B", ftypes.UINT32)
 
 gd_tcflag_pt.fields = {
  gd_tcflag_bm,
@@ -218,7 +224,12 @@ gd_tcflag_pt.fields = {
  gd_tcstatfl_bcnt,
  gd_tcstatfl_bcnt_A,
  gd_tcstatfl_bcnt_B,
- gd_tcstatfl_bcnt_r
+ gd_tcstatfl_bcnt_r,
+ gd_tcstatfl_wmxrat,
+ gd_tcstatfl_wmnsz_A,
+ gd_tcstatfl_wmnsz_B,
+ gd_tcstatfl_wmxsz_A,
+ gd_tcstatfl_wmxsz_B,
 }
 
 local x_iproto = Field.new("ip.proto")
@@ -226,6 +237,7 @@ local x_iplngt = Field.new("ip.len")
 local x_ipfrag = Field.new("ip.flags.mf")
 local x_tcflag = Field.new("tcp.flags")
 local x_tcstrm = Field.new("tcp.stream")
+local x_tcwsiz = Field.new("tcp.window_size")
 local x_tclngt = Field.new("tcp.len")
 local x_tcanfl = Field.new("tcp.analysis.flags")
 local x_tcanfrtr = Field.new("tcp.analysis.fast_retransmission")
@@ -303,6 +315,10 @@ local tcstatfl_fcA = {}
 local tcstatfl_bcA = {}
 local tcstatfl_fcB = {}
 local tcstatfl_bcB = {}
+local tcstatfl_wiA = {}
+local tcstatfl_wxA = {}
+local tcstatfl_wiB = {}
+local tcstatfl_wxB = {}
 
 local gd_tcanflmap_ol = {}
 
@@ -427,7 +443,6 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
   end
 
   if not pinfo.visited then
-
    if gd_tcflag_pt.prefs.tcanfl then
     tcanflcn[x_tcstrm().value] = 0
     tcanflcn_A[x_tcstrm().value] = 0
@@ -522,37 +537,93 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       tcstatfl_bcA[x_tcstrm().value] = x_tclngt().value
       tcstatfl_fcB[x_tcstrm().value] = 0
       tcstatfl_bcB[x_tcstrm().value] = 0
+      tcstatfl_wiA[x_tcstrm().value] = x_tcwsiz().value
+      tcstatfl_wxA[x_tcstrm().value] = x_tcwsiz().value
      elseif pinfo.src_port > pinfo.dst_port then
       tcstatfl_fcA[x_tcstrm().value] = 0
       tcstatfl_bcA[x_tcstrm().value] = 0
       tcstatfl_fcB[x_tcstrm().value] = 1
       tcstatfl_bcB[x_tcstrm().value] = x_tclngt().value
+      tcstatfl_wiB[x_tcstrm().value] = x_tcwsiz().value
+      tcstatfl_wxB[x_tcstrm().value] = x_tcwsiz().value
      elseif pinfo.net_src < pinfo.net_dst then
       tcstatfl_fcA[x_tcstrm().value] = 1
       tcstatfl_bcA[x_tcstrm().value] = x_tclngt().value
       tcstatfl_fcB[x_tcstrm().value] = 0
       tcstatfl_bcB[x_tcstrm().value] = 0
+      tcstatfl_wiA[x_tcstrm().value] = x_tcwsiz().value
+      tcstatfl_wxA[x_tcstrm().value] = x_tcwsiz().value
      elseif pinfo.net_src > pinfo.net_dst then
       tcstatfl_fcA[x_tcstrm().value] = 0
       tcstatfl_bcA[x_tcstrm().value] = 0
       tcstatfl_fcB[x_tcstrm().value] = 1
       tcstatfl_bcB[x_tcstrm().value] = x_tclngt().value
+      tcstatfl_wiB[x_tcstrm().value] = x_tcwsiz().value
+      tcstatfl_wxB[x_tcstrm().value] = x_tcwsiz().value
      end
     else
      tcstatfl_fc[x_tcstrm().value] = tcstatfl_fc[x_tcstrm().value] + 1
      tcstatfl_bc[x_tcstrm().value] = tcstatfl_bc[x_tcstrm().value] + x_tclngt().value
-     if pinfo.src_port <  pinfo.dst_port then
+     if pinfo.src_port < pinfo.dst_port then
       tcstatfl_fcA[x_tcstrm().value] = tcstatfl_fcA[x_tcstrm().value] + 1
       tcstatfl_bcA[x_tcstrm().value] = tcstatfl_bcA[x_tcstrm().value] + x_tclngt().value
-     elseif pinfo.src_port >  pinfo.dst_port then
+      if bit.band(x_tcflag().value, 4) == 0 then
+       if tcstatfl_wiA[x_tcstrm().value] then
+        if tcstatfl_wiA[x_tcstrm().value] > x_tcwsiz().value then
+         tcstatfl_wiA[x_tcstrm().value] = x_tcwsiz().value
+        elseif tcstatfl_wxA[x_tcstrm().value] < x_tcwsiz().value then
+         tcstatfl_wxA[x_tcstrm().value] = x_tcwsiz().value
+        end
+       else
+        tcstatfl_wiA[x_tcstrm().value] = x_tcwsiz().value
+        tcstatfl_wxA[x_tcstrm().value] = x_tcwsiz().value
+       end
+      end
+     elseif pinfo.src_port > pinfo.dst_port then
       tcstatfl_fcB[x_tcstrm().value] = tcstatfl_fcB[x_tcstrm().value] + 1
       tcstatfl_bcB[x_tcstrm().value] = tcstatfl_bcB[x_tcstrm().value] + x_tclngt().value
+      if bit.band(x_tcflag().value, 4) == 0 then
+       if tcstatfl_wiB[x_tcstrm().value] then
+        if tcstatfl_wiB[x_tcstrm().value] > x_tcwsiz().value then
+         tcstatfl_wiB[x_tcstrm().value] = x_tcwsiz().value
+        elseif tcstatfl_wxB[x_tcstrm().value] < x_tcwsiz().value then
+         tcstatfl_wxB[x_tcstrm().value] = x_tcwsiz().value
+        end
+       else
+        tcstatfl_wiB[x_tcstrm().value] = x_tcwsiz().value
+        tcstatfl_wxB[x_tcstrm().value] = x_tcwsiz().value
+       end
+      end
      elseif pinfo.net_src < pinfo.net_dst then
       tcstatfl_fcA[x_tcstrm().value] = tcstatfl_fcA[x_tcstrm().value] + 1
       tcstatfl_bcA[x_tcstrm().value] = tcstatfl_bcA[x_tcstrm().value] + x_tclngt().value
+      if bit.band(x_tcflag().value, 4) == 0 then
+       if tcstatfl_wiA[x_tcstrm().value] then
+        if tcstatfl_wiA[x_tcstrm().value] > x_tcwsiz().value then
+         tcstatfl_wiA[x_tcstrm().value] = x_tcwsiz().value
+        elseif tcstatfl_wxA[x_tcstrm().value] < x_tcwsiz().value then
+         tcstatfl_wxA[x_tcstrm().value] = x_tcwsiz().value
+        end
+       else
+        tcstatfl_wiA[x_tcstrm().value] = x_tcwsiz().value
+        tcstatfl_wxA[x_tcstrm().value] = x_tcwsiz().value
+       end
+      end
      elseif pinfo.net_src > pinfo.net_dst then
       tcstatfl_fcB[x_tcstrm().value] = tcstatfl_fcB[x_tcstrm().value] + 1
       tcstatfl_bcB[x_tcstrm().value] = tcstatfl_bcB[x_tcstrm().value] + x_tclngt().value
+      if bit.band(x_tcflag().value, 4) == 0 then
+       if tcstatfl_wiB[x_tcstrm().value] then
+        if tcstatfl_wiB[x_tcstrm().value] > x_tcwsiz().value then
+         tcstatfl_wiB[x_tcstrm().value] = x_tcwsiz().value
+        elseif tcstatfl_wxB[x_tcstrm().value] < x_tcwsiz().value then
+         tcstatfl_wxB[x_tcstrm().value] = x_tcwsiz().value
+        end
+       else
+        tcstatfl_wiB[x_tcstrm().value] = x_tcwsiz().value
+        tcstatfl_wxB[x_tcstrm().value] = x_tcwsiz().value
+       end
+      end
      end
      if tcstatfl_gnt[x_tcstrm().value] > pinfo.abs_ts then
       tcstatfl_gnt[x_tcstrm().value] = pinfo.abs_ts
@@ -1305,6 +1376,27 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       gd_tcanflmap_nu = 100.0
      end
      gd_tcflag_trbm_sub:add(gd_tcstatfl_bcnt_r, gd_tcanflmap_nu):set_generated()
+    end
+    if not ((tcstatfl_wiA[x_tcstrm().value] == nil) or (tcstatfl_wiB[x_tcstrm().value] == nil)) then
+     if tcstatfl_wiA[x_tcstrm().value] == 0 or tcstatfl_wiB[x_tcstrm().value] == 0 then
+      gd_tcanflmap_nu = 100.0
+     else
+      if (tcstatfl_wxA[x_tcstrm().value] / tcstatfl_wiA[x_tcstrm().value]) > (tcstatfl_wxB[x_tcstrm().value] / tcstatfl_wiB[x_tcstrm().value]) then
+       gd_tcanflmap_nu = math.log(tcstatfl_wxA[x_tcstrm().value] / tcstatfl_wiA[x_tcstrm().value])
+      else
+       gd_tcanflmap_nu = math.log(tcstatfl_wxB[x_tcstrm().value] / tcstatfl_wiB[x_tcstrm().value])
+      end
+      if gd_tcanflmap_nu < 10 then
+       gd_tcanflmap_nu = gd_tcanflmap_nu * 10.0
+      else
+       gd_tcanflmap_nu = 100.0
+      end
+     end
+     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcstatfl_wmxrat, gd_tcanflmap_nu):set_generated()
+     gd_tcflag_trbm_sub:add(gd_tcstatfl_wmnsz_A, tcstatfl_wiA[x_tcstrm().value]):set_generated()
+     gd_tcflag_trbm_sub:add(gd_tcstatfl_wmxsz_A, tcstatfl_wxA[x_tcstrm().value]):set_generated()
+     gd_tcflag_trbm_sub:add(gd_tcstatfl_wmnsz_B, tcstatfl_wiB[x_tcstrm().value]):set_generated()
+     gd_tcflag_trbm_sub:add(gd_tcstatfl_wmxsz_B, tcstatfl_wxB[x_tcstrm().value]):set_generated()
     end
    end
   end
