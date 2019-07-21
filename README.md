@@ -3,7 +3,7 @@
 <table border="0">
 <thead>
 <tr>
- <th>A Wireshark Lua post-dissector for express analysis of TCP conversations</th>
+ <th>A Wireshark Lua post-dissector for express analysis of TCP conversations performance</th>
  <td align="center" valign="center"><img src="Wireshark.png"></td></tr>
  </tr>
  <tr>
