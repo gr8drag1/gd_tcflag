@@ -1,17 +1,25 @@
 <h1><b>gd_tcflag</b> Wireshark Lua (wslua) post-dissector plug-in</h1>
 
-<p>
-A Wireshark Lua post-dissector for express analysis of TCP conversations.<br>
+<table>
+<thead>
+<tr>
+ <th>A Wireshark Lua post-dissector for express analysis of TCP conversations</th>
+ <td><img src="Wireshark.png"></td></tr>
+ </tr>
+</thead>
+<tbody>
+<tr>
+ <td colspan="2">
 Each conversation endpoint, A and B, is tracked individually. The decision which side is A or B is performed as follows:
 <ul>
  <li>If one TCP port is numerically less than the other, then the lesser port is A and the greater port is B</li>
  <li>If the port values are identical, then A is the numerically lesser IP address</li>
 </ul>
-
-<img src="Wireshark.png">
+ </tr>
+</tbody>
+</table>
 
 The post-dissector creates its own section with three subsections.
-</p>
 
 <h2>Protocol flags subsection, <i>gd_tcflag.tcbm</i></h2>
     
