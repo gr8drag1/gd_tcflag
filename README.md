@@ -8,7 +8,7 @@
  </tr>
  <tr>
   <td colspan="2">
-   Allows display filters to include complete TCP streams certain frames of which contained Syn, Syn+Ack, Fin, Rst, payload, retransmissions, zero window and etc., as well as total duration, number of frames and payload bytes<br>
+   Allows display filters to include complete TCP streams which contained at some point Syn, Syn+Ack, Fin, Rst, payload, retransmissions, zero window and etc., as well as total duration, number of frames and payload bytes<br>
    The reverse also holds true: by examining any frame it is possible to see if the corresponding conversation had Syn, Syn+Ack, Fin, Rst, payload, retransmissions, zero window and etc., for how long the conversation lasted and how many frames and payload bytes from each endpoint were seen
 </thead>
 <tbody>
