@@ -4,7 +4,7 @@
 <thead>
 <tr>
  <th>A Wireshark Lua post-dissector for express analysis of TCP conversations</th>
- <td colspan="2"><img src="Wireshark.png" valign="center"></td></tr>
+ <td rowspan="2" valign="center"><img src="Wireshark.png"></td></tr>
  </tr>
  <tr>
   <td>
