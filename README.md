@@ -7,6 +7,9 @@ Each conversation endpoint, A and B, is tracked individually. The decision which
  <li>If one TCP port is numerically less than the other, then the lesser port is A and the greater port is B</li>
  <li>If the port values are identical, then A is the numerically lesser IP address</li>
 </ul>
+
+<img src="Wireshark.png">
+
 The post-dissector creates its own section with three subsections.
 </p>
 
