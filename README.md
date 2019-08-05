@@ -166,7 +166,7 @@ Miscellaneous
    <li><i>gd_tcflag.tcstatfl.fc.winsizmax_A</i> : Highest receive window size received from A</li>
    <li><i>gd_tcflag.tcstatfl.fc.winsizmin_B</i> : Lowest receive window size received from B</li>
    <li><i>gd_tcflag.tcstatfl.fc.winsizmax_B</i> : Highest receive window size received from B</li>
-   <li><b>gd_tcflag.tcstatfl.byteratio</b> : Window sizes ratio, dB (logarithmic, between 0 and 100)
+   <li><b>gd_tcflag.tcstatfl.fc.winsizratio</b> : Window sizes ratio, dB (logarithmic, between 0 and 100)
     <ul>
      <li>If the actual ratio value is higher, it it capped at 100 dB still</li>
      <li>Values close to 0 dB mean that the lowest and the highest window sizes are approximately equal</li>
