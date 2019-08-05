@@ -36,7 +36,8 @@
 -- r15 : TCP analysis differentiation between peers added
 -- r16 : Statistics section added
 -- r17 : Sections activation made configurable
--- r18 : Window size tracking in the TCP header added to statistics section
+-- r18 : TCP window size field tracking added to the statistics
+-- r19 : TCP bytes in flight tracking added to the statistics
 -------------------------------------------------------------------------------
 
 -- Examples https://wiki.wireshark.org/Lua/Examples/PostDissector
@@ -46,31 +47,31 @@
 
 local gd_tcflag_pt = Proto("gd_tcflag", "TCP stream tracking")
 
-local gd_tcflag_bm = ProtoField.new("TCBM", "gd_tcflag.tcbm", ftypes.UINT16)
+local gd_tcflag_bm = ProtoField.new("TCBM", "gd_tcflag.tcbm", ftypes.UINT16, nil, base.HEX)
 local gd_tcflag_Syn = ProtoField.new("Syn", "gd_tcflag.tcbm.Syn", ftypes.BOOLEAN)
-local gd_tcflag_SynA = ProtoField.new("Syn A", "gd_tcflag.tcbm.SynA", ftypes.BOOLEAN)
-local gd_tcflag_SynB = ProtoField.new("Syn B", "gd_tcflag.tcbm.SynB", ftypes.BOOLEAN)
+local gd_tcflag_SynA = ProtoField.new("Syn A [0x00'01]", "gd_tcflag.tcbm.SynA", ftypes.BOOLEAN)
+local gd_tcflag_SynB = ProtoField.new("Syn B [0x00'02]", "gd_tcflag.tcbm.SynB", ftypes.BOOLEAN)
 local gd_tcflag_SnA = ProtoField.new("Syn+Ack", "gd_tcflag.tcbm.SnA", ftypes.BOOLEAN)
-local gd_tcflag_SnAA = ProtoField.new("Syn+Ack A", "gd_tcflag.tcbm.SnAA", ftypes.BOOLEAN)
-local gd_tcflag_SnAB = ProtoField.new("Syn+Ack B", "gd_tcflag.tcbm.SnAB", ftypes.BOOLEAN)
+local gd_tcflag_SnAA = ProtoField.new("Syn+Ack A [0x00'04]", "gd_tcflag.tcbm.SnAA", ftypes.BOOLEAN)
+local gd_tcflag_SnAB = ProtoField.new("Syn+Ack B [0x00'08]", "gd_tcflag.tcbm.SnAB", ftypes.BOOLEAN)
 local gd_tcflag_Ack = ProtoField.new("Ack", "gd_tcflag.tcbm.Ack", ftypes.BOOLEAN)
-local gd_tcflag_AckA = ProtoField.new("Ack A", "gd_tcflag.tcbm.AckA", ftypes.BOOLEAN)
-local gd_tcflag_AckB = ProtoField.new("Ack B", "gd_tcflag.tcbm.AckB", ftypes.BOOLEAN)
+local gd_tcflag_AckA = ProtoField.new("Ack A [0x00'10]", "gd_tcflag.tcbm.AckA", ftypes.BOOLEAN)
+local gd_tcflag_AckB = ProtoField.new("Ack B [0x00'20]", "gd_tcflag.tcbm.AckB", ftypes.BOOLEAN)
 local gd_tcflag_Dat = ProtoField.new("Data", "gd_tcflag.tcbm.Dat", ftypes.BOOLEAN)
-local gd_tcflag_DatA = ProtoField.new("Data A", "gd_tcflag.tcbm.DatA", ftypes.BOOLEAN)
-local gd_tcflag_DatB = ProtoField.new("Data B", "gd_tcflag.tcbm.DatB", ftypes.BOOLEAN)
+local gd_tcflag_DatA = ProtoField.new("Data A [0x00'40]", "gd_tcflag.tcbm.DatA", ftypes.BOOLEAN)
+local gd_tcflag_DatB = ProtoField.new("Data B [0x00'80]", "gd_tcflag.tcbm.DatB", ftypes.BOOLEAN)
 local gd_tcflag_MTUgt1500 = ProtoField.new("MTU > 1500 B", "gd_tcflag.tcbm.MTUgt1500", ftypes.BOOLEAN)
-local gd_tcflag_MTUgt1500A = ProtoField.new("MTU A > 1500 B", "gd_tcflag.tcbm.MTUgt1500A", ftypes.BOOLEAN)
-local gd_tcflag_MTUgt1500B = ProtoField.new("MTU B > 1500 B", "gd_tcflag.tcbm.MTUgt1500B", ftypes.BOOLEAN)
+local gd_tcflag_MTUgt1500A = ProtoField.new("MTU A > 1500 B [0x01'00]", "gd_tcflag.tcbm.MTUgt1500A", ftypes.BOOLEAN)
+local gd_tcflag_MTUgt1500B = ProtoField.new("MTU B > 1500 B [0x02'00]", "gd_tcflag.tcbm.MTUgt1500B", ftypes.BOOLEAN)
 local gd_tcflag_fragment = ProtoField.new("fragmented", "gd_tcflag.tcbm.fragment", ftypes.BOOLEAN)
-local gd_tcflag_fragmentA = ProtoField.new("fragmented A", "gd_tcflag.tcbm.fragmentA", ftypes.BOOLEAN)
-local gd_tcflag_fragmentB = ProtoField.new("fragmented B", "gd_tcflag.tcbm.fragmentB", ftypes.BOOLEAN)
+local gd_tcflag_fragmentA = ProtoField.new("fragmented A [0x04'00]", "gd_tcflag.tcbm.fragmentA", ftypes.BOOLEAN)
+local gd_tcflag_fragmentB = ProtoField.new("fragmented B [0x08'00]", "gd_tcflag.tcbm.fragmentB", ftypes.BOOLEAN)
 local gd_tcflag_Fin = ProtoField.new("Fin", "gd_tcflag.tcbm.Fin", ftypes.BOOLEAN)
-local gd_tcflag_FinA = ProtoField.new("Fin A", "gd_tcflag.tcbm.FinA", ftypes.BOOLEAN)
-local gd_tcflag_FinB = ProtoField.new("Fin B", "gd_tcflag.tcbm.FinB", ftypes.BOOLEAN)
+local gd_tcflag_FinA = ProtoField.new("Fin A [0x10'00]", "gd_tcflag.tcbm.FinA", ftypes.BOOLEAN)
+local gd_tcflag_FinB = ProtoField.new("Fin B [0x20'00]", "gd_tcflag.tcbm.FinB", ftypes.BOOLEAN)
 local gd_tcflag_Rst = ProtoField.new("Rst", "gd_tcflag.tcbm.Rst", ftypes.BOOLEAN)
-local gd_tcflag_RstA = ProtoField.new("Rst A", "gd_tcflag.tcbm.RstA", ftypes.BOOLEAN)
-local gd_tcflag_RstB = ProtoField.new("Rst B", "gd_tcflag.tcbm.RstB", ftypes.BOOLEAN)
+local gd_tcflag_RstA = ProtoField.new("Rst A [0x40'00]", "gd_tcflag.tcbm.RstA", ftypes.BOOLEAN)
+local gd_tcflag_RstB = ProtoField.new("Rst B [0x80'00]", "gd_tcflag.tcbm.RstB", ftypes.BOOLEAN)
 local gd_tcflag_End = ProtoField.new("End", "gd_tcflag.tcbm.End", ftypes.BOOLEAN)
 
 local gd_tcanfl_cn = ProtoField.new("TCP analysis flagged", "gd_tcflag.tcanflcn", ftypes.UINT32)
@@ -122,7 +123,7 @@ local gd_tcanfl_cn_akls = ProtoField.new("Analysis lost segment Ack", "gd_tcflag
 local gd_tcanfl_cn_akls_A = ProtoField.new("Analysis lost segment Ack A", "gd_tcflag.tcanflcn.ack_lost_segment_A", ftypes.UINT32)
 local gd_tcanfl_cn_akls_B = ProtoField.new("Analysis lost segment Ack B", "gd_tcflag.tcanflcn.ack_lost_segment_B", ftypes.UINT32)
 
-local gd_tcstatfl_root = ProtoField.new("Stream statistics", "gd_tcflag.tcstatfl", ftypes.PROTOCOL)
+local gd_tcstatfl_root = ProtoField.new("Stream stats", "gd_tcflag.tcstatfl", ftypes.PROTOCOL)
 local gd_tcstatfl_durt = ProtoField.new("Duration", "gd_tcflag.tcstatfl.duration", ftypes.FLOAT)
 local gd_tcstatfl_bgnf = ProtoField.new("Earliest frame", "gd_tcflag.tcstatfl.begin", ftypes.FRAMENUM)
 local gd_tcstatfl_endf = ProtoField.new("Latest frame", "gd_tcflag.tcstatfl.end", ftypes.FRAMENUM)
@@ -133,11 +134,14 @@ local gd_tcstatfl_bcnt = ProtoField.new("Total payload bytes", "gd_tcflag.tcstat
 local gd_tcstatfl_bcnt_A = ProtoField.new("Bytes from A", "gd_tcflag.tcstatfl.bytecount_A", ftypes.UINT32)
 local gd_tcstatfl_bcnt_B = ProtoField.new("Bytes from B", "gd_tcflag.tcstatfl.bytecount_B", ftypes.UINT32)
 local gd_tcstatfl_bcnt_r = ProtoField.new("Payload ratio, 0..100 dB", "gd_tcflag.tcstatfl.byteratio", ftypes.FLOAT)
-local gd_tcstatfl_wmxrat = ProtoField.new("Highest win max/min, 0..100 dB", "gd_tcflag.tcstatfl.winsizratio", ftypes.FLOAT)
-local gd_tcstatfl_wmnsz_A = ProtoField.new("Minumum win from A", "gd_tcflag.tcstatfl.winsizmin_A", ftypes.UINT32)
-local gd_tcstatfl_wmnsz_B = ProtoField.new("Minumum win from B", "gd_tcflag.tcstatfl.winsizmin_B", ftypes.UINT32)
-local gd_tcstatfl_wmxsz_A = ProtoField.new("Maximum win from A", "gd_tcflag.tcstatfl.winsizmax_A", ftypes.UINT32)
-local gd_tcstatfl_wmxsz_B = ProtoField.new("Maximum win from B", "gd_tcflag.tcstatfl.winsizmax_B", ftypes.UINT32)
+local gd_tcstatfl_sub_fc = ProtoField.new("Stream flow control", "gd_tcflag.tcstatfl.fc", ftypes.PROTOCOL)
+local gd_tcstatfl_wmnsz_A = ProtoField.new("Minumum win from A", "gd_tcflag.tcstatfl.fc.winsizmin_A", ftypes.UINT32)
+local gd_tcstatfl_wmnsz_B = ProtoField.new("Minumum win from B", "gd_tcflag.tcstatfl.fc.winsizmin_B", ftypes.UINT32)
+local gd_tcstatfl_wmxsz_A = ProtoField.new("Maximum win from A", "gd_tcflag.tcstatfl.fc.winsizmax_A", ftypes.UINT32)
+local gd_tcstatfl_wmxsz_B = ProtoField.new("Maximum win from B", "gd_tcflag.tcstatfl.fcwinsizmax_B", ftypes.UINT32)
+local gd_tcstatfl_wmxrat = ProtoField.new("Highest win max/min, 0..100 dB", "gd_tcflag.tcstatfl.fc.winsizratio", ftypes.FLOAT)
+local gd_tcstatfl_binfx_A = ProtoField.new("Maximum bytes in flight from A", "gd_tcflag.tcstatfl.fc.byteinflmax_A", ftypes.UINT32)
+local gd_tcstatfl_binfx_B = ProtoField.new("Maximum bytes in flight from B", "gd_tcflag.tcstatfl.fc.byteinflmax_B", ftypes.UINT32)
 
 gd_tcflag_pt.fields = {
  gd_tcflag_bm,
@@ -225,11 +229,14 @@ gd_tcflag_pt.fields = {
  gd_tcstatfl_bcnt_A,
  gd_tcstatfl_bcnt_B,
  gd_tcstatfl_bcnt_r,
+ gd_tcstatfl_sub_fc,
  gd_tcstatfl_wmxrat,
  gd_tcstatfl_wmnsz_A,
  gd_tcstatfl_wmnsz_B,
  gd_tcstatfl_wmxsz_A,
  gd_tcstatfl_wmxsz_B,
+ gd_tcstatfl_binfx_A,
+ gd_tcstatfl_binfx_B
 }
 
 local x_iproto = Field.new("ip.proto")
@@ -255,6 +262,7 @@ local x_tcanzwin = Field.new("tcp.analysis.zero_window")
 local x_tcanzwp = Field.new("tcp.analysis.zero_window_probe")
 local x_tcanzwpa = Field.new("tcp.analysis.zero_window_probe_ack")
 local x_tcanakls = Field.new("tcp.analysis.ack_lost_segment")
+local x_tcanbinf = Field.new("tcp.analysis.bytes_in_flight")
 
 local tcbm = {}
 local tcanflcn = {}
@@ -319,6 +327,8 @@ local tcstatfl_wiA = {}
 local tcstatfl_wxA = {}
 local tcstatfl_wiB = {}
 local tcstatfl_wxB = {}
+local tcstatfl_bfxA = {}
+local tcstatfl_bfxB = {}
 
 local gd_tcanflmap_ol = {}
 
@@ -330,7 +340,7 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
 
  if x_iproto() and x_iproto().value == 6 then
 
-  local gd_tcflag_tr = root:add(gd_tcflag_pt):set_generated()
+  local gd_tcflag_tr
 
   if gd_tcflag_pt.prefs.tcbm and x_tcflag() then
    if tcbm[x_tcstrm().value] then
@@ -539,6 +549,12 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       tcstatfl_bcB[x_tcstrm().value] = 0
       tcstatfl_wiA[x_tcstrm().value] = x_tcwsiz().value
       tcstatfl_wxA[x_tcstrm().value] = x_tcwsiz().value
+      if x_tcanbinfl() then
+       tcstatfl_bfxA[x_tcstrm().value] = x_tcanbinfl().value
+      else
+       tcstatfl_bfxA[x_tcstrm().value] = 0
+      end
+      tcstatfl_bfxB[x_tcstrm().value] = 0
      elseif pinfo.src_port > pinfo.dst_port then
       tcstatfl_fcA[x_tcstrm().value] = 0
       tcstatfl_bcA[x_tcstrm().value] = 0
@@ -546,6 +562,12 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       tcstatfl_bcB[x_tcstrm().value] = x_tclngt().value
       tcstatfl_wiB[x_tcstrm().value] = x_tcwsiz().value
       tcstatfl_wxB[x_tcstrm().value] = x_tcwsiz().value
+      tcstatfl_bfxA[x_tcstrm().value] = 0
+      if x_tcanbinf() then
+       tcstatfl_bfxB[x_tcstrm().value] = x_tcanbinf().value
+      else
+       tcstatfl_bfxB[x_tcstrm().value] = 0
+      end
      elseif pinfo.net_src < pinfo.net_dst then
       tcstatfl_fcA[x_tcstrm().value] = 1
       tcstatfl_bcA[x_tcstrm().value] = x_tclngt().value
@@ -553,6 +575,12 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       tcstatfl_bcB[x_tcstrm().value] = 0
       tcstatfl_wiA[x_tcstrm().value] = x_tcwsiz().value
       tcstatfl_wxA[x_tcstrm().value] = x_tcwsiz().value
+      if x_tcanbinf() then
+       tcstatfl_bfxA[x_tcstrm().value] = x_tcanbinf().value
+      else
+       tcstatfl_bfxA[x_tcstrm().value] = 0
+      end
+      tcstatfl_bfxB[x_tcstrm().value] = 0
      elseif pinfo.net_src > pinfo.net_dst then
       tcstatfl_fcA[x_tcstrm().value] = 0
       tcstatfl_bcA[x_tcstrm().value] = 0
@@ -560,6 +588,12 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       tcstatfl_bcB[x_tcstrm().value] = x_tclngt().value
       tcstatfl_wiB[x_tcstrm().value] = x_tcwsiz().value
       tcstatfl_wxB[x_tcstrm().value] = x_tcwsiz().value
+      tcstatfl_bfxA[x_tcstrm().value] = 0
+      if x_tcanbinf() then
+       tcstatfl_bfxB[x_tcstrm().value] = x_tcanbinf().value
+      else
+       tcstatfl_bfxB[x_tcstrm().value] = 0
+      end
      end
     else
      tcstatfl_fc[x_tcstrm().value] = tcstatfl_fc[x_tcstrm().value] + 1
@@ -567,6 +601,9 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
      if pinfo.src_port < pinfo.dst_port then
       tcstatfl_fcA[x_tcstrm().value] = tcstatfl_fcA[x_tcstrm().value] + 1
       tcstatfl_bcA[x_tcstrm().value] = tcstatfl_bcA[x_tcstrm().value] + x_tclngt().value
+      if tcstatfl_bfxA[x_tcstrm().value] < x_tcanbinf().value then
+       tcstatfl_bfxA[x_tcstrm().value] = x_tcanbinf().value
+      end
       if bit.band(x_tcflag().value, 4) == 0 then
        if tcstatfl_wiA[x_tcstrm().value] then
         if tcstatfl_wiA[x_tcstrm().value] > x_tcwsiz().value then
@@ -582,6 +619,9 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
      elseif pinfo.src_port > pinfo.dst_port then
       tcstatfl_fcB[x_tcstrm().value] = tcstatfl_fcB[x_tcstrm().value] + 1
       tcstatfl_bcB[x_tcstrm().value] = tcstatfl_bcB[x_tcstrm().value] + x_tclngt().value
+      if tcstatfl_bfxB[x_tcstrm().value] < x_tcanbinf().value then
+       tcstatfl_bfxB[x_tcstrm().value] = x_tcanbinf().value
+      end
       if bit.band(x_tcflag().value, 4) == 0 then
        if tcstatfl_wiB[x_tcstrm().value] then
         if tcstatfl_wiB[x_tcstrm().value] > x_tcwsiz().value then
@@ -597,6 +637,9 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
      elseif pinfo.net_src < pinfo.net_dst then
       tcstatfl_fcA[x_tcstrm().value] = tcstatfl_fcA[x_tcstrm().value] + 1
       tcstatfl_bcA[x_tcstrm().value] = tcstatfl_bcA[x_tcstrm().value] + x_tclngt().value
+      if tcstatfl_bfxA[x_tcstrm().value] < x_tcanbinf().value then
+       tcstatfl_bfxA[x_tcstrm().value] = x_tcanbinf().value
+      end
       if bit.band(x_tcflag().value, 4) == 0 then
        if tcstatfl_wiA[x_tcstrm().value] then
         if tcstatfl_wiA[x_tcstrm().value] > x_tcwsiz().value then
@@ -612,6 +655,9 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
      elseif pinfo.net_src > pinfo.net_dst then
       tcstatfl_fcB[x_tcstrm().value] = tcstatfl_fcB[x_tcstrm().value] + 1
       tcstatfl_bcB[x_tcstrm().value] = tcstatfl_bcB[x_tcstrm().value] + x_tclngt().value
+      if tcstatfl_bfxB[x_tcstrm().value] < x_tcanbinf().value then
+       tcstatfl_bfxB[x_tcstrm().value] = x_tcanbinf().value
+      end
       if bit.band(x_tcflag().value, 4) == 0 then
        if tcstatfl_wiB[x_tcstrm().value] then
         if tcstatfl_wiB[x_tcstrm().value] > x_tcwsiz().value then
@@ -1125,7 +1171,8 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
    end
   end
 
-  if gd_tcflag_tr then
+  if gd_tcflag_pt.prefs.tcbm or gd_tcflag_pt.prefs.tcanfl or gd_tcflag_pt.prefs.tcstatfl then
+   gd_tcflag_tr = root:add(gd_tcflag_pt):set_generated()
    if gd_tcflag_pt.prefs.tcbm then
     local gd_tcflag_trbm = gd_tcflag_tr:add(gd_tcflag_bm, gd_tcflag):set_generated()
     local gd_tcflag_trbm_sub = gd_tcflag_trbm
@@ -1377,6 +1424,15 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
      end
      gd_tcflag_trbm_sub:add(gd_tcstatfl_bcnt_r, gd_tcanflmap_nu):set_generated()
     end
+    gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcstatfl_sub_fc):set_generated()
+    if not (tcstatfl_wiA[x_tcstrm().value] == nil) then
+     gd_tcflag_trbm_sub:add(gd_tcstatfl_wmnsz_A, tcstatfl_wiA[x_tcstrm().value]):set_generated()
+     gd_tcflag_trbm_sub:add(gd_tcstatfl_wmxsz_A, tcstatfl_wxA[x_tcstrm().value]):set_generated()
+    end
+    if not (tcstatfl_wiB[x_tcstrm().value] == nil) then
+     gd_tcflag_trbm_sub:add(gd_tcstatfl_wmnsz_B, tcstatfl_wiB[x_tcstrm().value]):set_generated()
+     gd_tcflag_trbm_sub:add(gd_tcstatfl_wmxsz_B, tcstatfl_wxB[x_tcstrm().value]):set_generated()
+    end
     if not ((tcstatfl_wiA[x_tcstrm().value] == nil) or (tcstatfl_wiB[x_tcstrm().value] == nil)) then
      if tcstatfl_wiA[x_tcstrm().value] == 0 or tcstatfl_wiB[x_tcstrm().value] == 0 then
       gd_tcanflmap_nu = 100.0
@@ -1392,12 +1448,10 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
        gd_tcanflmap_nu = 100.0
       end
      end
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcstatfl_wmxrat, gd_tcanflmap_nu):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcstatfl_wmnsz_A, tcstatfl_wiA[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcstatfl_wmxsz_A, tcstatfl_wxA[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcstatfl_wmnsz_B, tcstatfl_wiB[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcstatfl_wmxsz_B, tcstatfl_wxB[x_tcstrm().value]):set_generated()
+     gd_tcflag_trbm_sub:add(gd_tcstatfl_wmxrat, gd_tcanflmap_nu):set_generated()
     end
+    gd_tcflag_trbm_sub:add(gd_tcstatfl_binfx_A, tcstatfl_bfxA[x_tcstrm().value]):set_generated()
+    gd_tcflag_trbm_sub:add(gd_tcstatfl_binfx_B, tcstatfl_bfxB[x_tcstrm().value]):set_generated()
    end
   end
 
