@@ -2,7 +2,7 @@
 <table>
 <body>
 <tr>
-<th>r4</th><td>The single flag End de-aggregated into Fin and Rst</td></tr>
+<th>r4</th><td>The single flag End de-aggregated into Fin and Rst. <b>gd_tcflag.tcbm.End</b> remains for filtering TCP streams containing either Fin or Rst</td></tr>
 <th>r5</th><td>Individual flag names added to the filter syntax</td></tr>
 <th>r6</th><td>Counter for tracking "tcp.analysis.flags" added</td></tr>
 <th>r7</th><td>Check for not tcp_keep_alive when tracking the payload (Data)</td></tr>
