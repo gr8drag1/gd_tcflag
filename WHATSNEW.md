@@ -14,7 +14,7 @@
 <th>r12</th><td>Simplified filter syntax for flags set on either A or B (or both)</td></tr>
 <th>r13</th><td>Keep counters separate for fast, spurious and plain retransmissions</td></tr>
 <th>r14</th><td>Support for multiple passes in TCP analysis tracking</td></tr>
-<th>r15</th><td>TCP analysis differentiation between peers added</td></tr>
+<th>r15</th><td>TCP analysis differentiation between peers <b>A</b> and <b>B</b> added</td></tr>
 <th>r16</th><td>Statistics section <b>gd_tcflag.tcstatfl</b> added</td></tr>
 <tr><th>r17</th><td>Sections activation made configurable</td></tr>
 <tr><th>r18</th><td>TCP window size field tracking added to the statistics</td></tr>
