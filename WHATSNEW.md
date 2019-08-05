@@ -17,5 +17,6 @@
 <th>r16</th><td>Statistics section added</td></tr>
 <tr><th>r17</th><td>Sections activation made configurable</td></tr>
 <tr><th>r18</th><td>TCP window size field tracking added to the statistics</td></tr>
+<tr><th>r19</th><td>: TCP bytes in flight tracking added to the statistics</td></tr>
 </tbody>
 </table>
