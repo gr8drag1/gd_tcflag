@@ -158,6 +158,28 @@ Miscellaneous
 </ul>
 </p>
 
+<p>
+<ul>
+ <li><b>gd_tcflag.tcstatfl.fc</b> : TCP flow control
+  <ul>
+   <li><i>gd_tcflag.tcstatfl.fc.winsizmin_A</i> : Lowest receive window size received from A</li>
+   <li><i>gd_tcflag.tcstatfl.fc.winsizmax_A</i> : Highest receive window size received from A</li>
+   <li><i>gd_tcflag.tcstatfl.fc.winsizmin_B</i> : Lowest receive window size received from B</li>
+   <li><i>gd_tcflag.tcstatfl.fc.winsizmax_B</i> : Highest receive window size received from B</li>
+   <li><b>gd_tcflag.tcstatfl.byteratio</b> : Window sizes ratio, dB (logarithmic, between 0 and 100)
+    <ul>
+     <li>If the actual ratio value is higher, it it capped at 100 dB still</li>
+     <li>Values close to 0 dB mean that the lowest and the highest window sizes are approximately equal</li>
+     <li>By the nature of the scale, each 3 dB approximately equals to two times the difference. Each 10 dB represents an order of magnitude difference</li>
+    </ul>
+   </li>
+   <li><i>gd_tcflag.tcstatfl.fc.byteinflmax_A</i> : Highest value of bytes in flight seen from A</li>
+   <li><i>gd_tcflag.tcstatfl.fc.byteinflmax_B</i> : Highest value of bytes in flight seen from B</li>
+  </ul>
+ </li>
+</ul>
+</p>
+
 <h2>Known limitations</h2>
 
 <p>
