@@ -5,7 +5,8 @@
 <th>r4</th><td>The single flag End de-aggregated into Fin and Rst.
   <br><b>gd_tcflag.tcbm.End</b> remains for filtering TCP streams containing either Fin or Rst</td></tr>
 <th>r5</th><td>Individual flag names added to the filter syntax</td></tr>
-  <th>r6</th><td>Counter for tracking "tcp.analysis.flags" added <b>gd_tcflag.tcanfl</b></td></tr>
+  <th>r6</th><td>Counter for tracking "tcp.analysis.flags" added <b>gd_tcflag.tcanfl</b>
+  <br><i>Thanks to Laura Chappel</i></td></tr>
 <th>r7</th><td>Check for not tcp_keep_alive when tracking the payload (Data)</td></tr>
 <th>r8</th><td>Tracking for jumbo IP MTU and for IP fragments added</td></tr>
 <th>r9</th><td>Changed IP fragments check from "ip.fragment" to "ip.flags.mf"</td></tr>
