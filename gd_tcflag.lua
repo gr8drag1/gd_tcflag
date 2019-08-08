@@ -729,9 +729,7 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
     if x_tcanakls() then
      gd_tcanflmap_nu = bit.bor(gd_tcanflmap_nu, 16384)
     end
-   end
 
-   if gd_tcflag_pt.prefs.tcanfl then
     if gd_tcanflmap_ol[pinfo.number] > 0 then
      if gd_tcanflmap_nu == 0 and tcanflcn[x_tcstrm().value] > 0 then
       tcanflcn[x_tcstrm().value] = tcanflcn[x_tcstrm().value] - 1
@@ -1450,8 +1448,10 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
      end
      gd_tcflag_trbm_sub:add(gd_tcstatfl_wmxrat, gd_tcanflmap_nu):set_generated()
     end
-    gd_tcflag_trbm_sub:add(gd_tcstatfl_binfx_A, tcstatfl_bfxA[x_tcstrm().value]):set_generated()
-    gd_tcflag_trbm_sub:add(gd_tcstatfl_binfx_B, tcstatfl_bfxB[x_tcstrm().value]):set_generated()
+    if tcstatfl_bfxA[x_tcstrm().value] and tcstatfl_bfxB[x_tcstrm().value] then
+     gd_tcflag_trbm_sub:add(gd_tcstatfl_binfx_A, tcstatfl_bfxA[x_tcstrm().value]):set_generated()
+     gd_tcflag_trbm_sub:add(gd_tcstatfl_binfx_B, tcstatfl_bfxB[x_tcstrm().value]):set_generated()
+    end
    end
   end
 
