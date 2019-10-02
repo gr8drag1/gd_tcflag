@@ -1176,21 +1176,21 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
     local gd_tcflag_trbm_sub = gd_tcflag_trbm
     if bit.band(gd_tcflag, 3) > 0 then
      gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_Syn, true):set_hidden()
-    end
-    if bit.band(gd_tcflag, 1) == 1 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_SynA, true):set_generated()
-     gd_tcflag_trbm_sub:set_text("SynA : True = peer A initiated Syn")
-    else
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_SynA, false):set_generated()
-     gd_tcflag_trbm_sub:set_text("SynA : False")
-    end
-    if bit.band(gd_tcflag, 2) == 2 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_Syn, true):set_hidden()
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_SynB, true):set_generated()
-     gd_tcflag_trbm_sub:set_text("SynB : True = peer B initiated Syn")
-    else
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_SynB, false):set_generated()
-     gd_tcflag_trbm_sub:set_text("SynB : False")
+     if bit.band(gd_tcflag, 1) == 1 then
+      gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_SynA, true):set_generated()
+      gd_tcflag_trbm_sub:set_text("SynA : True = peer A initiated Syn")
+     else
+      gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_SynA, false):set_generated()
+      gd_tcflag_trbm_sub:set_text("SynA : False")
+     end
+     if bit.band(gd_tcflag, 2) == 2 then
+      gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_Syn, true):set_hidden()
+      gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_SynB, true):set_generated()
+      gd_tcflag_trbm_sub:set_text("SynB : True = peer B initiated Syn")
+     else
+      gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_SynB, false):set_generated()
+      gd_tcflag_trbm_sub:set_text("SynB : False")
+     end
     end
     if bit.band(gd_tcflag, 12) > 0 then
      gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_SnA, true):set_hidden()
