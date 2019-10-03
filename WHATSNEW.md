@@ -21,5 +21,6 @@
 <tr><th>r18</th><td>TCP window size field tracking added to the statistics</td></tr>
 <tr><th>r19</th><td>TCP bytes in flight tracking added to the statistics
   <br>TCP flow control stats grouped under <b>gd_tcflag.tcstatfl.fc</b></td></tr>
+<tr><th>r20</th><td>Clear the global logical structures before processing a new capture</td></tr>
 </tbody>
 </table>
