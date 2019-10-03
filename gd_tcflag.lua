@@ -38,6 +38,7 @@
 -- r17 : Sections activation made configurable
 -- r18 : TCP window size field tracking added to the statistics
 -- r19 : TCP bytes in flight tracking added to the statistics
+-- r20 : Clear the global logical structures before processing a new capture
 -------------------------------------------------------------------------------
 
 -- Examples https://wiki.wireshark.org/Lua/Examples/PostDissector
@@ -337,6 +338,75 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
 
  local gd_tcflag = 0
  local gd_tcanflmap_nu = 0
+
+ if pinfo.number == 1 and not pinfo.visited then
+  tcbm = {}
+  tcanflcn = {}
+  tcanflcn_A = {}
+  tcanflcn_B = {}
+  tcanfl_frtr = {}
+  tcanfl_frtr_A = {}
+  tcanfl_frtr_B = {}
+  tcanfl_ka = {}
+  tcanfl_ka_A = {}
+  tcanfl_ka_B = {}
+  tcanfl_kaa = {}
+  tcanfl_kaa_A = {}
+  tcanfl_kaa_B = {}
+  tcanfl_losg = {}
+  tcanfl_losg_A = {}
+  tcanfl_losg_B = {}
+  tcanfl_ooo = {}
+  tcanfl_ooo_A = {}
+  tcanfl_ooo_B = {}
+  tcanfl_rtr = {}
+  tcanfl_rtr_A = {}
+  tcanfl_rtr_B = {}
+  tcanfl_rusp = {}
+  tcanfl_rusp_A = {}
+  tcanfl_rusp_B = {}
+  tcanfl_srtr = {}
+  tcanfl_srtr_A = {}
+  tcanfl_srtr_B = {}
+  tcanfl_wful = {}
+  tcanfl_wful_A = {}
+  tcanfl_wful_B = {}
+  tcanfl_wupd = {}
+  tcanfl_wupd_A = {}
+  tcanfl_wupd_B = {}
+  tcanfl_dack = {}
+  tcanfl_dack_A = {}
+  tcanfl_dack_B = {}
+  tcanfl_zwin = {}
+  tcanfl_zwin_A = {}
+  tcanfl_zwin_B = {}
+  tcanfl_zwp = {}
+  tcanfl_zwp_A = {}
+  tcanfl_zwp_B = {}
+  tcanfl_zwpa = {}
+  tcanfl_zwpa_A = {}
+  tcanfl_zwpa_B = {}
+  tcanfl_akls = {}
+  tcanfl_akls_A = {}
+  tcanfl_akls_B = {}
+  tcstatfl_fc = {}
+  tcstatfl_bc = {}
+  tcstatfl_gnf = {}
+  tcstatfl_gnt = {}
+  tcstatfl_ndf = {}
+  tcstatfl_ndt = {}
+  tcstatfl_fcA = {}
+  tcstatfl_bcA = {}
+  tcstatfl_fcB = {}
+  tcstatfl_bcB = {}
+  tcstatfl_wiA = {}
+  tcstatfl_wxA = {}
+  tcstatfl_wiB = {}
+  tcstatfl_wxB = {}
+  tcstatfl_bfxA = {}
+  tcstatfl_bfxB = {}
+  gd_tcanflmap_ol = {}
+ end
 
  if x_iproto() and x_iproto().value == 6 then
 
