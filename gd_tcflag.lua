@@ -39,6 +39,7 @@
 -- r18 : TCP window size field tracking added to the statistics
 -- r19 : TCP bytes in flight tracking added to the statistics
 -- r20 : Clear the global logical structures before processing a new capture
+-- r21 : Maximum tcp.analysis.duplicate_ack_num added under duplicate Ack
 -------------------------------------------------------------------------------
 
 -- Examples https://wiki.wireshark.org/Lua/Examples/PostDissector
@@ -110,7 +111,9 @@ local gd_tcanfl_cn_wupd_A = ProtoField.new("Analysis window update A", "gd_tcfla
 local gd_tcanfl_cn_wupd_B = ProtoField.new("Analysis window update B", "gd_tcflag.tcanflcn.window_update_B", ftypes.UINT32)
 local gd_tcanfl_cn_dack = ProtoField.new("Analysis duplicate Ack", "gd_tcflag.tcanflcn.duplicate_ack", ftypes.UINT32)
 local gd_tcanfl_cn_dack_A = ProtoField.new("Analysis duplicate Ack A", "gd_tcflag.tcanflcn.duplicate_ack_A", ftypes.UINT32)
+local gd_tcanfl_cn_dack_A_mx = ProtoField.new("Duplicate Ack A max", "gd_tcflag.tcanflcn.duplicate_ack_A_max", ftypes.UINT16)
 local gd_tcanfl_cn_dack_B = ProtoField.new("Analysis duplicate Ack B", "gd_tcflag.tcanflcn.duplicate_ack_B", ftypes.UINT32)
+local gd_tcanfl_cn_dack_B_mx = ProtoField.new("Duplicate Ack B max", "gd_tcflag.tcanflcn.duplicate_ack_B_max", ftypes.UINT16)
 local gd_tcanfl_cn_zwin = ProtoField.new("Analysis zero window", "gd_tcflag.tcanflcn.zero_window", ftypes.UINT32)
 local gd_tcanfl_cn_zwin_A = ProtoField.new("Analysis zero window A", "gd_tcflag.tcanflcn.zero_window_A", ftypes.UINT32)
 local gd_tcanfl_cn_zwin_B = ProtoField.new("Analysis zero window B", "gd_tcflag.tcanflcn.zero_window_B", ftypes.UINT32)
@@ -206,7 +209,9 @@ gd_tcflag_pt.fields = {
  gd_tcanfl_cn_wupd_B,
  gd_tcanfl_cn_dack,
  gd_tcanfl_cn_dack_A,
+ gd_tcanfl_cn_dack_A_mx,
  gd_tcanfl_cn_dack_B,
+ gd_tcanfl_cn_dack_B_mx,
  gd_tcanfl_cn_zwin,
  gd_tcanfl_cn_zwin_A,
  gd_tcanfl_cn_zwin_B,
@@ -301,7 +306,9 @@ local tcanfl_wupd_A = {}
 local tcanfl_wupd_B = {}
 local tcanfl_dack = {}
 local tcanfl_dack_A = {}
+local tcanfl_dack_A_mx = {}
 local tcanfl_dack_B = {}
+local tcanfl_dack_B_mx = {}
 local tcanfl_zwin = {}
 local tcanfl_zwin_A = {}
 local tcanfl_zwin_B = {}
@@ -376,7 +383,9 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
   tcanfl_wupd_B = {}
   tcanfl_dack = {}
   tcanfl_dack_A = {}
+  tcanfl_dack_A_mx = {}
   tcanfl_dack_B = {}
+  tcanfl_dack_B_mx = {}
   tcanfl_zwin = {}
   tcanfl_zwin_A = {}
   tcanfl_zwin_B = {}
@@ -410,7 +419,7 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
 
  if x_iproto() and x_iproto().value == 6 then
 
-  local gd_tcflag_tr
+  local gd_tcflag_tr0
 
   if gd_tcflag_pt.prefs.tcbm and x_tcflag() then
    if tcbm[x_tcstrm().value] then
@@ -581,7 +590,9 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
     if not tcanfl_dack[x_tcstrm().value] then
      tcanfl_dack[x_tcstrm().value] = 0
      tcanfl_dack_A[x_tcstrm().value] = 0
+     tcanfl_dack_A_mx[x_tcstrm().value] = 0
      tcanfl_dack_B[x_tcstrm().value] = 0
+     tcanfl_dack_B_mx[x_tcstrm().value] = 0
     end
     if not tcanfl_zwin[x_tcstrm().value] then
      tcanfl_zwin[x_tcstrm().value] = 0
@@ -1104,12 +1115,24 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
        tcanfl_dack[x_tcstrm().value] = tcanfl_dack[x_tcstrm().value] + 1
        if pinfo.src_port <  pinfo.dst_port then
         tcanfl_dack_A[x_tcstrm().value] = tcanfl_dack_A[x_tcstrm().value] + 1
+        if x_tcandack().value > tcanfl_dack_A_mx[x_tcstrm().value] then
+         tcanfl_dack_A_mx[x_tcstrm().value] = x_tcandack().value
+        end
        elseif pinfo.src_port > pinfo.dst_port then
         tcanfl_dack_B[x_tcstrm().value] = tcanfl_dack_B[x_tcstrm().value] + 1
+        if x_tcandack().value > tcanfl_dack_B_mx[x_tcstrm().value] then
+         tcanfl_dack_B_mx[x_tcstrm().value] = x_tcandack().value
+        end
        elseif pinfo.net_src < pinfo.net_dst then
         tcanfl_dack_A[x_tcstrm().value] = tcanfl_dack_A[x_tcstrm().value] + 1
+        if x_tcandack().value > tcanfl_dack_A_mx[x_tcstrm().value] then
+         tcanfl_dack_A_mx[x_tcstrm().value] = x_tcandack().value
+        end
        elseif pinfo.net_src > pinfo.net_dst then
         tcanfl_dack_B[x_tcstrm().value] = tcanfl_dack_B[x_tcstrm().value] + 1
+        if x_tcandack().value > tcanfl_dack_B_mx[x_tcstrm().value] then
+         tcanfl_dack_B_mx[x_tcstrm().value] = x_tcandack().value
+        end
        end
       else
        if tcanfl_dack[x_tcstrm().value] > 0 then
@@ -1240,245 +1263,285 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
   end
 
   if gd_tcflag_pt.prefs.tcbm or gd_tcflag_pt.prefs.tcanfl or gd_tcflag_pt.prefs.tcstatfl then
-   gd_tcflag_tr = root:add(gd_tcflag_pt):set_generated()
+   gd_tcflag_tr0 = root:add(gd_tcflag_pt):set_generated()
+   local gd_tcflag_tr1
+   local gd_tcflag_tr2
+   local gd_tcflag_tr3
    if gd_tcflag_pt.prefs.tcbm then
-    local gd_tcflag_trbm = gd_tcflag_tr:add(gd_tcflag_bm, gd_tcflag):set_generated()
-    local gd_tcflag_trbm_sub = gd_tcflag_trbm
+    gd_tcflag_tr1 = gd_tcflag_tr0:add(gd_tcflag_bm, gd_tcflag):set_generated()
     if bit.band(gd_tcflag, 3) > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_Syn, true):set_hidden()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Syn, true):set_hidden()
      if bit.band(gd_tcflag, 1) == 1 then
-      gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_SynA, true):set_generated()
-      gd_tcflag_trbm_sub:set_text("SynA : True = peer A initiated Syn")
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SynA, true):set_generated()
+      gd_tcflag_tr2:set_text("SynA : True = peer A initiated Syn")
      else
-      gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_SynA, false):set_generated()
-      gd_tcflag_trbm_sub:set_text("SynA : False")
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SynA, false):set_generated()
+      gd_tcflag_tr2:set_text("SynA : False")
      end
      if bit.band(gd_tcflag, 2) == 2 then
-      gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_Syn, true):set_hidden()
-      gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_SynB, true):set_generated()
-      gd_tcflag_trbm_sub:set_text("SynB : True = peer B initiated Syn")
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Syn, true):set_hidden()
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SynB, true):set_generated()
+      gd_tcflag_tr2:set_text("SynB : True = peer B initiated Syn")
      else
-      gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_SynB, false):set_generated()
-      gd_tcflag_trbm_sub:set_text("SynB : False")
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SynB, false):set_generated()
+      gd_tcflag_tr2:set_text("SynB : False")
      end
     end
     if bit.band(gd_tcflag, 12) > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_SnA, true):set_hidden()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnA, true):set_hidden()
     end
     if bit.band(gd_tcflag, 4) == 4 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_SnAA, true):set_generated()
-     gd_tcflag_trbm_sub:set_text("SnAA : True = peer A replied with Syn+Ack")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnAA, true):set_generated()
+     gd_tcflag_tr2:set_text("SnAA : True = peer A replied with Syn+Ack")
     else
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_SnAA, false):set_generated()
-     gd_tcflag_trbm_sub:set_text("SnAA : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnAA, false):set_generated()
+     gd_tcflag_tr2:set_text("SnAA : False")
     end
     if bit.band(gd_tcflag, 8) == 8 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_SnAB, true):set_generated()
-     gd_tcflag_trbm_sub:set_text("SnAB : True = peer B replied with Syn+Ack")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnAB, true):set_generated()
+     gd_tcflag_tr2:set_text("SnAB : True = peer B replied with Syn+Ack")
     else
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_SnAB, false):set_generated()
-     gd_tcflag_trbm_sub:set_text("SnAB : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnAB, false):set_generated()
+     gd_tcflag_tr2:set_text("SnAB : False")
     end
     if bit.band(gd_tcflag, 48) > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_Ack, true):set_hidden()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Ack, true):set_hidden()
     end
     if bit.band(gd_tcflag, 16) == 16 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_AckA, true):set_generated()
-     gd_tcflag_trbm_sub:set_text("AckA : True = peer A sent empty Ack")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_AckA, true):set_generated()
+     gd_tcflag_tr2:set_text("AckA : True = peer A sent empty Ack")
     else
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_AckA, false):set_generated()
-     gd_tcflag_trbm_sub:set_text("AckA : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_AckA, false):set_generated()
+     gd_tcflag_tr2:set_text("AckA : False")
     end
     if bit.band(gd_tcflag, 32) == 32 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_AckB, true):set_generated()
-     gd_tcflag_trbm_sub:set_text("AckB : True = Peer B sent empty Ack")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_AckB, true):set_generated()
+     gd_tcflag_tr2:set_text("AckB : True = Peer B sent empty Ack")
     else
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_AckB, false):set_generated()
-     gd_tcflag_trbm_sub:set_text("AckB : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_AckB, false):set_generated()
+     gd_tcflag_tr2:set_text("AckB : False")
     end
     if bit.band(gd_tcflag, 192) > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_Dat, true):set_hidden()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Dat, true):set_hidden()
     end
     if bit.band(gd_tcflag, 64) == 64 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_DatA, true):set_generated()
-     gd_tcflag_trbm_sub:set_text("DatA : True = peer A sent payload")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_DatA, true):set_generated()
+     gd_tcflag_tr2:set_text("DatA : True = peer A sent payload")
     else
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_DatA, false):set_generated()
-     gd_tcflag_trbm_sub:set_text("DatA : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_DatA, false):set_generated()
+     gd_tcflag_tr2:set_text("DatA : False")
     end
     if bit.band(gd_tcflag, 128) == 128 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_DatB, true):set_generated()
-     gd_tcflag_trbm_sub:set_text("DatB : True = peer B sent payload")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_DatB, true):set_generated()
+     gd_tcflag_tr2:set_text("DatB : True = peer B sent payload")
     else
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_DatB, false):set_generated()
-     gd_tcflag_trbm_sub:set_text("DatB : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_DatB, false):set_generated()
+     gd_tcflag_tr2:set_text("DatB : False")
     end
     if bit.band(gd_tcflag, 768) > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_MTUgt1500, true):set_hidden()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500, true):set_hidden()
     end
     if bit.band(gd_tcflag, 256) == 256 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_MTUgt1500A, true):set_generated()
-     gd_tcflag_trbm_sub:set_text("MTUAgt1500 : True = peer A sent IP length > 1500 B")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500A, true):set_generated()
+     gd_tcflag_tr2:set_text("MTUAgt1500 : True = peer A sent IP length > 1500 B")
     else
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_MTUgt1500A, false):set_generated()
-     gd_tcflag_trbm_sub:set_text("MTUAgt1500 : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500A, false):set_generated()
+     gd_tcflag_tr2:set_text("MTUAgt1500 : False")
     end
     if bit.band(gd_tcflag, 512) == 512 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_MTUgt1500B, true):set_generated()
-     gd_tcflag_trbm_sub:set_text("MTUBgt1500 : True = peer B sent IP length > 1500 B")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500B, true):set_generated()
+     gd_tcflag_tr2:set_text("MTUBgt1500 : True = peer B sent IP length > 1500 B")
     else
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_MTUgt1500B, false):set_generated()
-     gd_tcflag_trbm_sub:set_text("MTUBgt1500 : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500B, false):set_generated()
+     gd_tcflag_tr2:set_text("MTUBgt1500 : False")
     end
     if bit.band(gd_tcflag, 3072) > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_fragment, true):set_hidden()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragment, true):set_hidden()
     end
     if bit.band(gd_tcflag, 1024) == 1024 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_fragmentA, true):set_generated()
-     gd_tcflag_trbm_sub:set_text("fragmentA : True = peer A sent IP fragmented")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragmentA, true):set_generated()
+     gd_tcflag_tr2:set_text("fragmentA : True = peer A sent IP fragmented")
     else
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_fragmentA, false):set_generated()
-     gd_tcflag_trbm_sub:set_text("fragmentA : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragmentA, false):set_generated()
+     gd_tcflag_tr2:set_text("fragmentA : False")
     end
     if bit.band(gd_tcflag, 2048) == 2048 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_fragmentB, true):set_generated()
-     gd_tcflag_trbm_sub:set_text("fragmentB : True = peer B sent IP fragmented")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragmentB, true):set_generated()
+     gd_tcflag_tr2:set_text("fragmentB : True = peer B sent IP fragmented")
     else
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_fragmentB, false):set_generated()
-     gd_tcflag_trbm_sub:set_text("fragmentB : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragmentB, false):set_generated()
+     gd_tcflag_tr2:set_text("fragmentB : False")
     end
     if bit.band(gd_tcflag, 12288) > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_Fin, true):set_hidden()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Fin, true):set_hidden()
     end
     if bit.band(gd_tcflag, 4096) == 4096 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_FinA, true):set_generated()
-     gd_tcflag_trbm_sub:set_text("FinA : True = peer A sent Fin")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_FinA, true):set_generated()
+     gd_tcflag_tr2:set_text("FinA : True = peer A sent Fin")
     else
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_FinA, false):set_generated()
-     gd_tcflag_trbm_sub:set_text("FinA : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_FinA, false):set_generated()
+     gd_tcflag_tr2:set_text("FinA : False")
     end
     if bit.band(gd_tcflag, 8192) == 8192 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_FinB, true):set_generated()
-     gd_tcflag_trbm_sub:set_text("FinB : True = peer B sent Fin")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_FinB, true):set_generated()
+     gd_tcflag_tr2:set_text("FinB : True = peer B sent Fin")
     else
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_FinB, false):set_generated()
-     gd_tcflag_trbm_sub:set_text("FinB : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_FinB, false):set_generated()
+     gd_tcflag_tr2:set_text("FinB : False")
     end
     if bit.band(gd_tcflag, 49152) > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_Rst, true):set_hidden()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Rst, true):set_hidden()
     end
     if bit.band(gd_tcflag, 16384) == 16384 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_RstA, true):set_generated()
-     gd_tcflag_trbm_sub:set_text("RstA : True = peer A originated Rst")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_RstA, true):set_generated()
+     gd_tcflag_tr2:set_text("RstA : True = peer A originated Rst")
     else
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_RstA, false):set_generated()
-     gd_tcflag_trbm_sub:set_text("RstA : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_RstA, false):set_generated()
+     gd_tcflag_tr2:set_text("RstA : False")
     end
     if bit.band(gd_tcflag, 32768) == 32768 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_RstB, true):set_generated()
-     gd_tcflag_trbm_sub:set_text("RstB : True = peer B originated Rst")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_RstB, true):set_generated()
+     gd_tcflag_tr2:set_text("RstB : True = peer B originated Rst")
     else
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_RstB, false):set_generated()
-     gd_tcflag_trbm_sub:set_text("RstB : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_RstB, false):set_generated()
+     gd_tcflag_tr2:set_text("RstB : False")
     end
     if bit.band(gd_tcflag, 61440) > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcflag_End, true):set_hidden()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_End, true):set_hidden()
     end
    end
 
    if gd_tcflag_pt.prefs.tcanfl then
-    gd_tcflag_trbm = gd_tcflag_tr:add(gd_tcanfl_cn, tcanflcn[x_tcstrm().value]):set_generated()
-    gd_tcflag_trbm:add(gd_tcanfl_cn_A, tcanflcn_A[x_tcstrm().value]):set_generated()
-    gd_tcflag_trbm:add(gd_tcanfl_cn_B, tcanflcn_B[x_tcstrm().value]):set_generated()
+    gd_tcflag_tr1 = gd_tcflag_tr0:add(gd_tcanfl_cn, tcanflcn[x_tcstrm().value]):set_generated()
+    gd_tcflag_tr1:add(gd_tcanfl_cn_A, tcanflcn_A[x_tcstrm().value]):set_generated()
+    gd_tcflag_tr1:add(gd_tcanfl_cn_B, tcanflcn_B[x_tcstrm().value]):set_generated()
     if tcanfl_dack[x_tcstrm().value] > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcanfl_cn_dack, tcanfl_dack[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcanfl_cn_dack, tcanfl_dack[x_tcstrm().value]):set_generated()
+     if tcanfl_dack_A[x_tcstrm().value] then
+      gd_tcflag_tr3 = gd_tcflag_tr2:add(gd_tcanfl_cn_dack_A, tcanfl_dack_A[x_tcstrm().value]):set_generated()
+      if tcanfl_dack_A[x_tcstrm().value] > 0 then
+       gd_tcflag_tr3:add(gd_tcanfl_cn_dack_A_mx, tcanfl_dack_A_mx[x_tcstrm().value]):set_generated()
+      end
+      gd_tcflag_tr3 = gd_tcflag_tr2:add(gd_tcanfl_cn_dack_B, tcanfl_dack_B[x_tcstrm().value]):set_generated()
+      if tcanfl_dack_B[x_tcstrm().value] > 0 then
+       gd_tcflag_tr3:add(gd_tcanfl_cn_dack_B_mx, tcanfl_dack_B_mx[x_tcstrm().value]):set_generated()
+      end
+     end
     end
     if tcanfl_frtr[x_tcstrm().value] > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcanfl_cn_frtr, tcanfl_frtr[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_frtr_A, tcanfl_frtr_A[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_frtr_B, tcanfl_frtr_B[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcanfl_cn_frtr, tcanfl_frtr[x_tcstrm().value]):set_generated()
+     if tcanfl_frtr_A[x_tcstrm().value] then
+      gd_tcflag_tr2:add(gd_tcanfl_cn_frtr_A, tcanfl_frtr_A[x_tcstrm().value]):set_generated()
+      gd_tcflag_tr2:add(gd_tcanfl_cn_frtr_B, tcanfl_frtr_B[x_tcstrm().value]):set_generated()
+     end
     end
     if tcanfl_ka[x_tcstrm().value] > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcanfl_cn_ka, tcanfl_ka[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_ka_A, tcanfl_ka_A[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_ka_B, tcanfl_ka_B[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcanfl_cn_ka, tcanfl_ka[x_tcstrm().value]):set_generated()
+     if tcanfl_ka_A[x_tcstrm().value] then
+      gd_tcflag_tr2:add(gd_tcanfl_cn_ka_A, tcanfl_ka_A[x_tcstrm().value]):set_generated()
+      gd_tcflag_tr2:add(gd_tcanfl_cn_ka_B, tcanfl_ka_B[x_tcstrm().value]):set_generated()
+     end
     end
     if tcanfl_kaa[x_tcstrm().value] > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcanfl_cn_kaa, tcanfl_kaa[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_kaa_A, tcanfl_kaa_A[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_kaa_B, tcanfl_kaa_B[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcanfl_cn_kaa, tcanfl_kaa[x_tcstrm().value]):set_generated()
+     if tcanfl_kaa_A[x_tcstrm().value] then
+      gd_tcflag_tr2:add(gd_tcanfl_cn_kaa_A, tcanfl_kaa_A[x_tcstrm().value]):set_generated()
+      gd_tcflag_tr2:add(gd_tcanfl_cn_kaa_B, tcanfl_kaa_B[x_tcstrm().value]):set_generated()
+     end
     end
     if tcanfl_losg[x_tcstrm().value] > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcanfl_cn_losg, tcanfl_losg[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_losg_A, tcanfl_losg_A[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_losg_B, tcanfl_losg_B[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcanfl_cn_losg, tcanfl_losg[x_tcstrm().value]):set_generated()
+     if tcanfl_losg_A[x_tcstrm().value] then
+      gd_tcflag_tr2:add(gd_tcanfl_cn_losg_A, tcanfl_losg_A[x_tcstrm().value]):set_generated()
+      gd_tcflag_tr2:add(gd_tcanfl_cn_losg_B, tcanfl_losg_B[x_tcstrm().value]):set_generated()
+     end
     end
     if tcanfl_akls[x_tcstrm().value] > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcanfl_cn_akls, tcanfl_akls[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_akls_A, tcanfl_akls_A[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_akls_B, tcanfl_akls_B[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcanfl_cn_akls, tcanfl_akls[x_tcstrm().value]):set_generated()
+     if tcanfl_akls_A[x_tcstrm().value] then
+      gd_tcflag_tr2:add(gd_tcanfl_cn_akls_A, tcanfl_akls_A[x_tcstrm().value]):set_generated()
+      gd_tcflag_tr2:add(gd_tcanfl_cn_akls_B, tcanfl_akls_B[x_tcstrm().value]):set_generated()
+     end
     end
     if tcanfl_ooo[x_tcstrm().value] > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcanfl_cn_ooo, tcanfl_ooo[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_ooo_A, tcanfl_ooo_A[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_ooo_B, tcanfl_ooo_B[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcanfl_cn_ooo, tcanfl_ooo[x_tcstrm().value]):set_generated()
+     if tcanfl_ooo_A[x_tcstrm().value] then
+      gd_tcflag_tr2:add(gd_tcanfl_cn_ooo_A, tcanfl_ooo_A[x_tcstrm().value]):set_generated()
+      gd_tcflag_tr2:add(gd_tcanfl_cn_ooo_B, tcanfl_ooo_B[x_tcstrm().value]):set_generated()
+     end
     end
     if tcanfl_rtr[x_tcstrm().value] > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcanfl_cn_rtr, tcanfl_rtr[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_rtr_A, tcanfl_rtr_A[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_rtr_B, tcanfl_rtr_B[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcanfl_cn_rtr, tcanfl_rtr[x_tcstrm().value]):set_generated()
+     if tcanfl_rtr_A[x_tcstrm().value] then
+      gd_tcflag_tr2:add(gd_tcanfl_cn_rtr_A, tcanfl_rtr_A[x_tcstrm().value]):set_generated()
+      gd_tcflag_tr2:add(gd_tcanfl_cn_rtr_B, tcanfl_rtr_B[x_tcstrm().value]):set_generated()
+     end
     end
     if tcanfl_rusp[x_tcstrm().value] > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcanfl_cn_rusp, tcanfl_rusp[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_rusp_A, tcanfl_rusp_A[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_rusp_B, tcanfl_rusp_B[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcanfl_cn_rusp, tcanfl_rusp[x_tcstrm().value]):set_generated()
+     if tcanfl_rusp_A[x_tcstrm().value] then
+      gd_tcflag_tr2:add(gd_tcanfl_cn_rusp_A, tcanfl_rusp_A[x_tcstrm().value]):set_generated()
+      gd_tcflag_tr2:add(gd_tcanfl_cn_rusp_B, tcanfl_rusp_B[x_tcstrm().value]):set_generated()
+     end
     end
     if tcanfl_srtr[x_tcstrm().value] > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcanfl_cn_srtr, tcanfl_srtr[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_srtr_A, tcanfl_srtr_A[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_srtr_B, tcanfl_srtr_B[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcanfl_cn_srtr, tcanfl_srtr[x_tcstrm().value]):set_generated()
+     if tcanfl_srtr_A[x_tcstrm().value] then
+      gd_tcflag_tr2:add(gd_tcanfl_cn_srtr_A, tcanfl_srtr_A[x_tcstrm().value]):set_generated()
+      gd_tcflag_tr2:add(gd_tcanfl_cn_srtr_B, tcanfl_srtr_B[x_tcstrm().value]):set_generated()
+     end
     end
     if tcanfl_wful[x_tcstrm().value] > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcanfl_cn_wful, tcanfl_wful[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_wful_A, tcanfl_wful_A[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_wful_B, tcanfl_wful_B[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcanfl_cn_wful, tcanfl_wful[x_tcstrm().value]):set_generated()
+     if tcanfl_wful_A[x_tcstrm().value] then
+      gd_tcflag_tr2:add(gd_tcanfl_cn_wful_A, tcanfl_wful_A[x_tcstrm().value]):set_generated()
+      gd_tcflag_tr2:add(gd_tcanfl_cn_wful_B, tcanfl_wful_B[x_tcstrm().value]):set_generated()
+     end
     end
     if tcanfl_wupd[x_tcstrm().value] > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcanfl_cn_wupd, tcanfl_wupd[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_wupd_A, tcanfl_wupd_A[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_wupd_B, tcanfl_wupd_B[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcanfl_cn_wupd, tcanfl_wupd[x_tcstrm().value]):set_generated()
+     if tcanfl_wupd_A[x_tcstrm().value] then
+      gd_tcflag_tr2:add(gd_tcanfl_cn_wupd_A, tcanfl_wupd_A[x_tcstrm().value]):set_generated()
+      gd_tcflag_tr2:add(gd_tcanfl_cn_wupd_B, tcanfl_wupd_B[x_tcstrm().value]):set_generated()
+     end
     end
     if tcanfl_zwin[x_tcstrm().value] > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcanfl_cn_zwin, tcanfl_zwin[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_zwin_A, tcanfl_zwin_A[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_zwin_B, tcanfl_zwin_B[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcanfl_cn_zwin, tcanfl_zwin[x_tcstrm().value]):set_generated()
+     if tcanfl_zwin_A[x_tcstrm().value] then
+      gd_tcflag_tr2:add(gd_tcanfl_cn_zwin_A, tcanfl_zwin_A[x_tcstrm().value]):set_generated()
+      gd_tcflag_tr2:add(gd_tcanfl_cn_zwin_B, tcanfl_zwin_B[x_tcstrm().value]):set_generated()
+     end
     end
     if tcanfl_zwp[x_tcstrm().value] > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcanfl_cn_zwp, tcanfl_zwp[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_zwp_A, tcanfl_zwp_A[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_zwp_B, tcanfl_zwp_B[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcanfl_cn_zwp, tcanfl_zwp[x_tcstrm().value]):set_generated()
+     if tcanfl_zwp_A[x_tcstrm().value] then
+      gd_tcflag_tr2:add(gd_tcanfl_cn_zwp_A, tcanfl_zwp_A[x_tcstrm().value]):set_generated()
+      gd_tcflag_tr2:add(gd_tcanfl_cn_zwp_B, tcanfl_zwp_B[x_tcstrm().value]):set_generated()
+     end
     end
     if tcanfl_zwpa[x_tcstrm().value] > 0 then
-     gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcanfl_cn_zwpa, tcanfl_zwpa[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_zwpa_A, tcanfl_zwpa_A[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcanfl_cn_zwpa_B, tcanfl_zwpa_B[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcanfl_cn_zwpa, tcanfl_zwpa[x_tcstrm().value]):set_generated()
+     if tcanfl_zwpa_A[x_tcstrm().value] then
+      gd_tcflag_tr2:add(gd_tcanfl_cn_zwpa_A, tcanfl_zwpa_A[x_tcstrm().value]):set_generated()
+      gd_tcflag_tr2:add(gd_tcanfl_cn_zwpa_B, tcanfl_zwpa_B[x_tcstrm().value]):set_generated()
+     end
     end
    end
    if gd_tcflag_pt.prefs.tcstatfl then
-    gd_tcflag_trbm = gd_tcflag_tr:add(gd_tcstatfl_root):set_generated()
-    gd_tcflag_trbm:add(gd_tcstatfl_durt, tcstatfl_ndt[x_tcstrm().value] - tcstatfl_gnt[x_tcstrm().value]):set_generated()
-    gd_tcflag_trbm:add(gd_tcstatfl_bgnf, tcstatfl_gnf[x_tcstrm().value]):set_generated()
-    gd_tcflag_trbm:add(gd_tcstatfl_endf, tcstatfl_ndf[x_tcstrm().value]):set_generated()
-    gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcstatfl_fcnt, tcstatfl_fc[x_tcstrm().value]):set_generated()
-    gd_tcflag_trbm_sub:add(gd_tcstatfl_fcnt_A, tcstatfl_fcA[x_tcstrm().value]):set_generated()
-    gd_tcflag_trbm_sub:add(gd_tcstatfl_fcnt_B, tcstatfl_fcB[x_tcstrm().value]):set_generated()
-    gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcstatfl_bcnt, tcstatfl_bc[x_tcstrm().value]):set_generated()
-    gd_tcflag_trbm_sub:add(gd_tcstatfl_bcnt_A, tcstatfl_bcA[x_tcstrm().value]):set_generated()
-    gd_tcflag_trbm_sub:add(gd_tcstatfl_bcnt_B, tcstatfl_bcB[x_tcstrm().value]):set_generated()
+    gd_tcflag_tr1 = gd_tcflag_tr0:add(gd_tcstatfl_root):set_generated()
+    gd_tcflag_tr1:add(gd_tcstatfl_durt, tcstatfl_ndt[x_tcstrm().value] - tcstatfl_gnt[x_tcstrm().value]):set_generated()
+    gd_tcflag_tr1:add(gd_tcstatfl_bgnf, tcstatfl_gnf[x_tcstrm().value]):set_generated()
+    gd_tcflag_tr1:add(gd_tcstatfl_endf, tcstatfl_ndf[x_tcstrm().value]):set_generated()
+    gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcstatfl_fcnt, tcstatfl_fc[x_tcstrm().value]):set_generated()
+    gd_tcflag_tr2:add(gd_tcstatfl_fcnt_A, tcstatfl_fcA[x_tcstrm().value]):set_generated()
+    gd_tcflag_tr2:add(gd_tcstatfl_fcnt_B, tcstatfl_fcB[x_tcstrm().value]):set_generated()
+    gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcstatfl_bcnt, tcstatfl_bc[x_tcstrm().value]):set_generated()
+    gd_tcflag_tr2:add(gd_tcstatfl_bcnt_A, tcstatfl_bcA[x_tcstrm().value]):set_generated()
+    gd_tcflag_tr2:add(gd_tcstatfl_bcnt_B, tcstatfl_bcB[x_tcstrm().value]):set_generated()
     if tcstatfl_bcA[x_tcstrm().value] == tcstatfl_bcB[x_tcstrm().value] then
-     gd_tcflag_trbm_sub:add(gd_tcstatfl_bcnt_r, 0.0):set_generated()
+     gd_tcflag_tr2:add(gd_tcstatfl_bcnt_r, 0.0):set_generated()
     elseif tcstatfl_bcA[x_tcstrm().value] == 0 or tcstatfl_bcB[x_tcstrm().value] == 0 then
-     gd_tcflag_trbm_sub:add(gd_tcstatfl_bcnt_r, 100.0):set_generated()
+     gd_tcflag_tr2:add(gd_tcstatfl_bcnt_r, 100.0):set_generated()
     else
      if tcstatfl_bcA[x_tcstrm().value] > tcstatfl_bcB[x_tcstrm().value] then
       gd_tcanflmap_nu = math.log(tcstatfl_bcA[x_tcstrm().value] / tcstatfl_bcB[x_tcstrm().value]) / math.log(10.0)
@@ -1490,16 +1553,16 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
      else
       gd_tcanflmap_nu = 100.0
      end
-     gd_tcflag_trbm_sub:add(gd_tcstatfl_bcnt_r, gd_tcanflmap_nu):set_generated()
+     gd_tcflag_tr2:add(gd_tcstatfl_bcnt_r, gd_tcanflmap_nu):set_generated()
     end
-    gd_tcflag_trbm_sub = gd_tcflag_trbm:add(gd_tcstatfl_sub_fc):set_generated()
+    gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcstatfl_sub_fc):set_generated()
     if not (tcstatfl_wiA[x_tcstrm().value] == nil) then
-     gd_tcflag_trbm_sub:add(gd_tcstatfl_wmnsz_A, tcstatfl_wiA[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcstatfl_wmxsz_A, tcstatfl_wxA[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2:add(gd_tcstatfl_wmnsz_A, tcstatfl_wiA[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2:add(gd_tcstatfl_wmxsz_A, tcstatfl_wxA[x_tcstrm().value]):set_generated()
     end
     if not (tcstatfl_wiB[x_tcstrm().value] == nil) then
-     gd_tcflag_trbm_sub:add(gd_tcstatfl_wmnsz_B, tcstatfl_wiB[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcstatfl_wmxsz_B, tcstatfl_wxB[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2:add(gd_tcstatfl_wmnsz_B, tcstatfl_wiB[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2:add(gd_tcstatfl_wmxsz_B, tcstatfl_wxB[x_tcstrm().value]):set_generated()
     end
     if not ((tcstatfl_wiA[x_tcstrm().value] == nil) or (tcstatfl_wiB[x_tcstrm().value] == nil)) then
      if tcstatfl_wiA[x_tcstrm().value] == 0 or tcstatfl_wiB[x_tcstrm().value] == 0 then
@@ -1516,11 +1579,11 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
        gd_tcanflmap_nu = 100.0
       end
      end
-     gd_tcflag_trbm_sub:add(gd_tcstatfl_wmxrat, gd_tcanflmap_nu):set_generated()
+     gd_tcflag_tr2:add(gd_tcstatfl_wmxrat, gd_tcanflmap_nu):set_generated()
     end
     if tcstatfl_bfxA[x_tcstrm().value] and tcstatfl_bfxB[x_tcstrm().value] then
-     gd_tcflag_trbm_sub:add(gd_tcstatfl_binfx_A, tcstatfl_bfxA[x_tcstrm().value]):set_generated()
-     gd_tcflag_trbm_sub:add(gd_tcstatfl_binfx_B, tcstatfl_bfxB[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2:add(gd_tcstatfl_binfx_A, tcstatfl_bfxA[x_tcstrm().value]):set_generated()
+     gd_tcflag_tr2:add(gd_tcstatfl_binfx_B, tcstatfl_bfxB[x_tcstrm().value]):set_generated()
     end
    end
   end
