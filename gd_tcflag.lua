@@ -679,6 +679,15 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
     else
      tcstatfl_fc[x_tcstrm().value] = tcstatfl_fc[x_tcstrm().value] + 1
      tcstatfl_bc[x_tcstrm().value] = tcstatfl_bc[x_tcstrm().value] + x_tclngt().value
+     if tcstatfl_gnt[x_tcstrm().value] > pinfo.abs_ts then
+      tcstatfl_gnt[x_tcstrm().value] = pinfo.abs_ts
+      tcstatfl_gnf[x_tcstrm().value] = pinfo.number
+     elseif tcstatfl_ndt[x_tcstrm().value] < pinfo.abs_ts then
+      tcstatfl_ndt[x_tcstrm().value] = pinfo.abs_ts
+      tcstatfl_ndf[x_tcstrm().value] = pinfo.number
+     elseif tcstatfl_ndt[x_tcstrm().value] == pinfo.abs_ts and tcstatfl_ndf[x_tcstrm().value] < pinfo.number then
+      tcstatfl_ndf[x_tcstrm().value] = pinfo.number
+     end
      if pinfo.src_port < pinfo.dst_port then
       tcstatfl_fcA[x_tcstrm().value] = tcstatfl_fcA[x_tcstrm().value] + 1
       tcstatfl_bcA[x_tcstrm().value] = tcstatfl_bcA[x_tcstrm().value] + x_tclngt().value
@@ -751,15 +760,6 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
         tcstatfl_wxB[x_tcstrm().value] = x_tcwsiz().value
        end
       end
-     end
-     if tcstatfl_gnt[x_tcstrm().value] > pinfo.abs_ts then
-      tcstatfl_gnt[x_tcstrm().value] = pinfo.abs_ts
-      tcstatfl_gnf[x_tcstrm().value] = pinfo.number
-     elseif tcstatfl_ndt[x_tcstrm().value] < pinfo.abs_ts then
-      tcstatfl_ndt[x_tcstrm().value] = pinfo.abs_ts
-      tcstatfl_ndf[x_tcstrm().value] = pinfo.number
-     elseif tcstatfl_ndt[x_tcstrm().value] == pinfo.abs_ts and tcstatfl_ndf[x_tcstrm().value] < pinfo.number then
-      tcstatfl_ndf[x_tcstrm().value] = pinfo.number
      end
     end
    end
