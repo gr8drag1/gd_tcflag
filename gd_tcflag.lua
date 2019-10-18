@@ -16,6 +16,7 @@
 --
 -- G. Dragon for his original idea
 -- Tsapsleoni and Matthew Winnett's dog for their inspiration
+-- Betty DuBois for Bettyland
 -- Laura Chappell for her "Golden Graph" idea
 -- Jasper Bongertz for his byte ratio idea
 -------------------------------------------------------------------------------
@@ -40,6 +41,7 @@
 -- r19 : TCP bytes in flight tracking added to the statistics
 -- r20 : Clear the global logical structures before processing a new capture
 -- r21 : Maximum tcp.analysis.duplicate_ack_num added under duplicate Ack
+-- r22 : Unused fields of TCP bitmap ("[TCBM]") no longer displayed
 -------------------------------------------------------------------------------
 
 -- Examples https://wiki.wireshark.org/Lua/Examples/PostDissector
@@ -1289,125 +1291,126 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
     end
     if bit.band(gd_tcflag, 12) > 0 then
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnA, true):set_hidden()
-    end
-    if bit.band(gd_tcflag, 4) == 4 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnAA, true):set_generated()
-     gd_tcflag_tr2:set_text("SnAA : True = peer A replied with Syn+Ack")
-    else
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnAA, false):set_generated()
-     gd_tcflag_tr2:set_text("SnAA : False")
-    end
-    if bit.band(gd_tcflag, 8) == 8 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnAB, true):set_generated()
-     gd_tcflag_tr2:set_text("SnAB : True = peer B replied with Syn+Ack")
-    else
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnAB, false):set_generated()
-     gd_tcflag_tr2:set_text("SnAB : False")
+     if bit.band(gd_tcflag, 4) == 4 then
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnAA, true):set_generated()
+      gd_tcflag_tr2:set_text("SnAA : True = peer A replied with Syn+Ack")
+     else
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnAA, false):set_generated()
+      gd_tcflag_tr2:set_text("SnAA : False")
+     end
+     if bit.band(gd_tcflag, 8) == 8 then
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnAB, true):set_generated()
+      gd_tcflag_tr2:set_text("SnAB : True = peer B replied with Syn+Ack")
+     else
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnAB, false):set_generated()
+      gd_tcflag_tr2:set_text("SnAB : False")
+     end
     end
     if bit.band(gd_tcflag, 48) > 0 then
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Ack, true):set_hidden()
     end
-    if bit.band(gd_tcflag, 16) == 16 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_AckA, true):set_generated()
-     gd_tcflag_tr2:set_text("AckA : True = peer A sent empty Ack")
-    else
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_AckA, false):set_generated()
-     gd_tcflag_tr2:set_text("AckA : False")
-    end
-    if bit.band(gd_tcflag, 32) == 32 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_AckB, true):set_generated()
-     gd_tcflag_tr2:set_text("AckB : True = Peer B sent empty Ack")
-    else
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_AckB, false):set_generated()
-     gd_tcflag_tr2:set_text("AckB : False")
+    if bit.band(gd_tcflag, 48) > 0 then
+     if bit.band(gd_tcflag, 16) == 16 then
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_AckA, true):set_generated()
+      gd_tcflag_tr2:set_text("AckA : True = peer A sent empty Ack")
+     else
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_AckA, false):set_generated()
+      gd_tcflag_tr2:set_text("AckA : False")
+     end
+     if bit.band(gd_tcflag, 32) == 32 then
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_AckB, true):set_generated()
+      gd_tcflag_tr2:set_text("AckB : True = Peer B sent empty Ack")
+     else
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_AckB, false):set_generated()
+      gd_tcflag_tr2:set_text("AckB : False")
+     end
     end
     if bit.band(gd_tcflag, 192) > 0 then
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Dat, true):set_hidden()
-    end
-    if bit.band(gd_tcflag, 64) == 64 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_DatA, true):set_generated()
-     gd_tcflag_tr2:set_text("DatA : True = peer A sent payload")
-    else
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_DatA, false):set_generated()
-     gd_tcflag_tr2:set_text("DatA : False")
-    end
-    if bit.band(gd_tcflag, 128) == 128 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_DatB, true):set_generated()
-     gd_tcflag_tr2:set_text("DatB : True = peer B sent payload")
-    else
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_DatB, false):set_generated()
-     gd_tcflag_tr2:set_text("DatB : False")
+     if bit.band(gd_tcflag, 64) == 64 then
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_DatA, true):set_generated()
+      gd_tcflag_tr2:set_text("DatA : True = peer A sent payload")
+     else
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_DatA, false):set_generated()
+      gd_tcflag_tr2:set_text("DatA : False")
+     end
+     if bit.band(gd_tcflag, 128) == 128 then
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_DatB, true):set_generated()
+      gd_tcflag_tr2:set_text("DatB : True = peer B sent payload")
+     else
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_DatB, false):set_generated()
+      gd_tcflag_tr2:set_text("DatB : False")
+     end
     end
     if bit.band(gd_tcflag, 768) > 0 then
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500, true):set_hidden()
-    end
-    if bit.band(gd_tcflag, 256) == 256 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500A, true):set_generated()
-     gd_tcflag_tr2:set_text("MTUAgt1500 : True = peer A sent IP length > 1500 B")
-    else
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500A, false):set_generated()
-     gd_tcflag_tr2:set_text("MTUAgt1500 : False")
-    end
-    if bit.band(gd_tcflag, 512) == 512 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500B, true):set_generated()
-     gd_tcflag_tr2:set_text("MTUBgt1500 : True = peer B sent IP length > 1500 B")
-    else
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500B, false):set_generated()
-     gd_tcflag_tr2:set_text("MTUBgt1500 : False")
+     if bit.band(gd_tcflag, 256) == 256 then
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500A, true):set_generated()
+      gd_tcflag_tr2:set_text("MTUAgt1500 : True = peer A sent IP length > 1500 B")
+     else
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500A, false):set_generated()
+      gd_tcflag_tr2:set_text("MTUAgt1500 : False")
+     end
+     if bit.band(gd_tcflag, 512) == 512 then
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500B, true):set_generated()
+      gd_tcflag_tr2:set_text("MTUBgt1500 : True = peer B sent IP length > 1500 B")
+     else
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500B, false):set_generated()
+      gd_tcflag_tr2:set_text("MTUBgt1500 : False")
+     end
     end
     if bit.band(gd_tcflag, 3072) > 0 then
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragment, true):set_hidden()
-    end
-    if bit.band(gd_tcflag, 1024) == 1024 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragmentA, true):set_generated()
-     gd_tcflag_tr2:set_text("fragmentA : True = peer A sent IP fragmented")
-    else
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragmentA, false):set_generated()
-     gd_tcflag_tr2:set_text("fragmentA : False")
-    end
-    if bit.band(gd_tcflag, 2048) == 2048 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragmentB, true):set_generated()
-     gd_tcflag_tr2:set_text("fragmentB : True = peer B sent IP fragmented")
-    else
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragmentB, false):set_generated()
-     gd_tcflag_tr2:set_text("fragmentB : False")
-    end
-    if bit.band(gd_tcflag, 12288) > 0 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Fin, true):set_hidden()
-    end
-    if bit.band(gd_tcflag, 4096) == 4096 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_FinA, true):set_generated()
-     gd_tcflag_tr2:set_text("FinA : True = peer A sent Fin")
-    else
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_FinA, false):set_generated()
-     gd_tcflag_tr2:set_text("FinA : False")
-    end
-    if bit.band(gd_tcflag, 8192) == 8192 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_FinB, true):set_generated()
-     gd_tcflag_tr2:set_text("FinB : True = peer B sent Fin")
-    else
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_FinB, false):set_generated()
-     gd_tcflag_tr2:set_text("FinB : False")
-    end
-    if bit.band(gd_tcflag, 49152) > 0 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Rst, true):set_hidden()
-    end
-    if bit.band(gd_tcflag, 16384) == 16384 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_RstA, true):set_generated()
-     gd_tcflag_tr2:set_text("RstA : True = peer A originated Rst")
-    else
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_RstA, false):set_generated()
-     gd_tcflag_tr2:set_text("RstA : False")
-    end
-    if bit.band(gd_tcflag, 32768) == 32768 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_RstB, true):set_generated()
-     gd_tcflag_tr2:set_text("RstB : True = peer B originated Rst")
-    else
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_RstB, false):set_generated()
-     gd_tcflag_tr2:set_text("RstB : False")
+     if bit.band(gd_tcflag, 1024) == 1024 then
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragmentA, true):set_generated()
+      gd_tcflag_tr2:set_text("fragmentA : True = peer A sent IP fragmented")
+     else
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragmentA, false):set_generated()
+      gd_tcflag_tr2:set_text("fragmentA : False")
+     end
+     if bit.band(gd_tcflag, 2048) == 2048 then
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragmentB, true):set_generated()
+      gd_tcflag_tr2:set_text("fragmentB : True = peer B sent IP fragmented")
+     else
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragmentB, false):set_generated()
+      gd_tcflag_tr2:set_text("fragmentB : False")
+     end
     end
     if bit.band(gd_tcflag, 61440) > 0 then
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_End, true):set_hidden()
+     if bit.band(gd_tcflag, 12288) > 0 then
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Fin, true):set_hidden()
+      if bit.band(gd_tcflag, 4096) == 4096 then
+       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_FinA, true):set_generated()
+       gd_tcflag_tr2:set_text("FinA : True = peer A sent Fin")
+      else
+       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_FinA, false):set_generated()
+       gd_tcflag_tr2:set_text("FinA : False")
+      end
+      if bit.band(gd_tcflag, 8192) == 8192 then
+       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_FinB, true):set_generated()
+       gd_tcflag_tr2:set_text("FinB : True = peer B sent Fin")
+      else
+       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_FinB, false):set_generated()
+       gd_tcflag_tr2:set_text("FinB : False")
+      end
+     end
+     if bit.band(gd_tcflag, 49152) > 0 then
+      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Rst, true):set_hidden()
+      if bit.band(gd_tcflag, 16384) == 16384 then
+       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_RstA, true):set_generated()
+       gd_tcflag_tr2:set_text("RstA : True = peer A originated Rst")
+       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_RstA, false):set_generated()
+       gd_tcflag_tr2:set_text("RstA : False")
+      end
+      if bit.band(gd_tcflag, 32768) == 32768 then
+       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_RstB, true):set_generated()
+       gd_tcflag_tr2:set_text("RstB : True = peer B originated Rst")
+      else
+       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_RstB, false):set_generated()
+       gd_tcflag_tr2:set_text("RstB : False")
+      end
+     end
     end
    end
 
