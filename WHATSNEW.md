@@ -23,5 +23,8 @@
   <br>TCP flow control stats grouped under <b>gd_tcflag.tcstatfl.fc</b></td></tr>
 <tr><th>r20</th><td>Clear the global logical structures before processing a new capture</td></tr>
 <tr><th>r21</th><td>Maximum tcp.analysis.duplicate_ack_num added under duplicate Ack</td></tr>
+<tr><th>r22</th><td>Unused fields of TCP bitmap ("[TCBM]") no longer displayed</td></tr>
+<tr><th>r23</th><td>Displaying TCBM unused fields made configurable
+  <br>RTT/IRTT ratio added to stream flow control tracking</td></tr>
 </tbody>
 </table>
