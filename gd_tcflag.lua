@@ -42,6 +42,8 @@
 -- r20 : Clear the global logical structures before processing a new capture
 -- r21 : Maximum tcp.analysis.duplicate_ack_num added under duplicate Ack
 -- r22 : Unused fields of TCP bitmap ("[TCBM]") no longer displayed
+-- r23 : Displaying TCBM unused fields made configurable
+--       RTT/IRTT ratio added to stream flow control tracking
 -------------------------------------------------------------------------------
 
 -- Examples https://wiki.wireshark.org/Lua/Examples/PostDissector
@@ -148,6 +150,7 @@ local gd_tcstatfl_wmxsz_B = ProtoField.new("Maximum win from B", "gd_tcflag.tcst
 local gd_tcstatfl_wmxrat = ProtoField.new("Highest win max/min, 0..100 dB", "gd_tcflag.tcstatfl.fc.winsizratio", ftypes.FLOAT)
 local gd_tcstatfl_binfx_A = ProtoField.new("Maximum bytes in flight from A", "gd_tcflag.tcstatfl.fc.byteinflmax_A", ftypes.UINT32)
 local gd_tcstatfl_binfx_B = ProtoField.new("Maximum bytes in flight from B", "gd_tcflag.tcstatfl.fc.byteinflmax_B", ftypes.UINT32)
+local gd_tcstatfl_rttrat = ProtoField.new("Highest RTT/IRTT, 0..100 dB", "gd_tcflag.tcstatfl.fc.rttratio", ftypes.FLOAT)
 
 gd_tcflag_pt.fields = {
  gd_tcflag_bm,
@@ -244,16 +247,20 @@ gd_tcflag_pt.fields = {
  gd_tcstatfl_wmxsz_A,
  gd_tcstatfl_wmxsz_B,
  gd_tcstatfl_binfx_A,
- gd_tcstatfl_binfx_B
+ gd_tcstatfl_binfx_B,
+ gd_tcstatfl_rttrat
 }
 
-local x_iproto = Field.new("ip.proto")
+local x_ip = Field.new("ip")
 local x_iplngt = Field.new("ip.len")
 local x_ipfrag = Field.new("ip.flags.mf")
+local x_tcp = Field.new("tcp")
 local x_tcflag = Field.new("tcp.flags")
 local x_tcstrm = Field.new("tcp.stream")
 local x_tcwsiz = Field.new("tcp.window_size")
 local x_tclngt = Field.new("tcp.len")
+local x_tccrtt = Field.new("tcp.analysis.ack_rtt")
+local x_tcirtt = Field.new("tcp.analysis.initial_rtt")
 local x_tcanfl = Field.new("tcp.analysis.flags")
 local x_tcanfrtr = Field.new("tcp.analysis.fast_retransmission")
 local x_tcanka = Field.new("tcp.analysis.keep_alive")
@@ -339,6 +346,7 @@ local tcstatfl_wiB = {}
 local tcstatfl_wxB = {}
 local tcstatfl_bfxA = {}
 local tcstatfl_bfxB = {}
+local tcstatfl_rtt = {}
 
 local gd_tcanflmap_ol = {}
 
@@ -416,10 +424,11 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
   tcstatfl_wxB = {}
   tcstatfl_bfxA = {}
   tcstatfl_bfxB = {}
+  tcstatfl_rtt = {}
   gd_tcanflmap_ol = {}
  end
 
- if x_iproto() and x_iproto().value == 6 then
+ if x_tcp() then
 
   local gd_tcflag_tr0
 
@@ -427,7 +436,7 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
    if tcbm[x_tcstrm().value] then
     gd_tcflag = tcbm[x_tcstrm().value]
    end
-   if x_iplngt().value > 1500 then
+   if x_ip() and x_iplngt().value > 1500 then
     if pinfo.src_port < pinfo.dst_port then
      gd_tcflag = bit.bor(gd_tcflag, 256)
     elseif pinfo.src_port > pinfo.dst_port then
@@ -440,7 +449,7 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
      gd_tcflag = bit.bor(gd_tcflag, 768)
     end
    end
-   if x_ipfrag().value then
+   if x_ip() and x_ipfrag().value then
     if pinfo.src_port < pinfo.dst_port then
      gd_tcflag = bit.bor(gd_tcflag, 1024)
     elseif pinfo.src_port > pinfo.dst_port then
@@ -761,6 +770,19 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
         tcstatfl_wiB[x_tcstrm().value] = x_tcwsiz().value
         tcstatfl_wxB[x_tcstrm().value] = x_tcwsiz().value
        end
+      end
+     end
+    end
+   end
+   if gd_tcflag_pt.prefs.tcstatfl then
+    if x_tcirtt() and x_tccrtt() and x_tcirtt().value and x_tccrtt().value then
+     if loadstring("return " .. tostring(x_tcirtt().value))() > 0 and loadstring("return " .. tostring(x_tccrtt().value))() >= loadstring("return " .. tostring(x_tcirtt().value))() then
+      if tcstatfl_rtt[x_tcstrm().value] then
+       if tcstatfl_rtt[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value) .. "/" .. tostring(x_tcirtt().value))() then
+        tcstatfl_rtt[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value) .. "/" .. tostring(x_tcirtt().value))()
+       end
+      else
+       tcstatfl_rtt[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value) .. "/" .. tostring(x_tcirtt().value))()
       end
      end
     end
@@ -1262,6 +1284,19 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
      gd_tcanflmap_ol[pinfo.number] = bit.bxor(gd_tcanflmap_ol[pinfo.number], gd_tcanflmap_nu)
     end
    end
+   if gd_tcflag_pt.prefs.tcstatfl then
+    if x_tcirtt() and x_tccrtt() and x_tcirtt().value and x_tccrtt().value then
+     if loadstring("return " .. tostring(x_tcirtt().value))() > 0 and loadstring("return " .. tostring(x_tccrtt().value))() >= loadstring("return " .. tostring(x_tcirtt().value))() then
+      if tcstatfl_rtt[x_tcstrm().value] then
+       if tcstatfl_rtt[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value) .. "/" .. tostring(x_tcirtt().value))() then
+        tcstatfl_rtt[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value) .. "/" .. tostring(x_tcirtt().value))()
+       end
+      else
+       tcstatfl_rtt[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value) .. "/" .. tostring(x_tcirtt().value))()
+      end
+     end
+    end
+   end
   end
 
   if gd_tcflag_pt.prefs.tcbm or gd_tcflag_pt.prefs.tcanfl or gd_tcflag_pt.prefs.tcstatfl then
@@ -1271,7 +1306,7 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
    local gd_tcflag_tr3
    if gd_tcflag_pt.prefs.tcbm then
     gd_tcflag_tr1 = gd_tcflag_tr0:add(gd_tcflag_bm, gd_tcflag):set_generated()
-    if bit.band(gd_tcflag, 3) > 0 then
+    if bit.band(gd_tcflag, 3) > 0 or gd_tcflag_pt.prefs.tcbm_keep0s then
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Syn, true):set_hidden()
      if bit.band(gd_tcflag, 1) == 1 then
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SynA, true):set_generated()
@@ -1289,7 +1324,7 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       gd_tcflag_tr2:set_text("SynB : False")
      end
     end
-    if bit.band(gd_tcflag, 12) > 0 then
+    if bit.band(gd_tcflag, 12) > 0 or gd_tcflag_pt.prefs.tcbm_keep0s then
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnA, true):set_hidden()
      if bit.band(gd_tcflag, 4) == 4 then
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnAA, true):set_generated()
@@ -1309,7 +1344,7 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
     if bit.band(gd_tcflag, 48) > 0 then
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Ack, true):set_hidden()
     end
-    if bit.band(gd_tcflag, 48) > 0 then
+    if bit.band(gd_tcflag, 48) > 0 or gd_tcflag_pt.prefs.tcbm_keep0s then
      if bit.band(gd_tcflag, 16) == 16 then
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_AckA, true):set_generated()
       gd_tcflag_tr2:set_text("AckA : True = peer A sent empty Ack")
@@ -1325,7 +1360,7 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       gd_tcflag_tr2:set_text("AckB : False")
      end
     end
-    if bit.band(gd_tcflag, 192) > 0 then
+    if bit.band(gd_tcflag, 192) > 0 or gd_tcflag_pt.prefs.tcbm_keep0s then
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Dat, true):set_hidden()
      if bit.band(gd_tcflag, 64) == 64 then
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_DatA, true):set_generated()
@@ -1342,7 +1377,7 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       gd_tcflag_tr2:set_text("DatB : False")
      end
     end
-    if bit.band(gd_tcflag, 768) > 0 then
+    if bit.band(gd_tcflag, 768) > 0 or gd_tcflag_pt.prefs.tcbm_keep0s then
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500, true):set_hidden()
      if bit.band(gd_tcflag, 256) == 256 then
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500A, true):set_generated()
@@ -1359,7 +1394,7 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       gd_tcflag_tr2:set_text("MTUBgt1500 : False")
      end
     end
-    if bit.band(gd_tcflag, 3072) > 0 then
+    if bit.band(gd_tcflag, 3072) > 0 or gd_tcflag_pt.prefs.tcbm_keep0s then
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragment, true):set_hidden()
      if bit.band(gd_tcflag, 1024) == 1024 then
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragmentA, true):set_generated()
@@ -1376,9 +1411,9 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       gd_tcflag_tr2:set_text("fragmentB : False")
      end
     end
-    if bit.band(gd_tcflag, 61440) > 0 then
+    if bit.band(gd_tcflag, 61440) > 0 or gd_tcflag_pt.prefs.tcbm_keep0s then
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_End, true):set_hidden()
-     if bit.band(gd_tcflag, 12288) > 0 then
+     if bit.band(gd_tcflag, 12288) > 0 or gd_tcflag_pt.prefs.tcbm_keep0s then
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Fin, true):set_hidden()
       if bit.band(gd_tcflag, 4096) == 4096 then
        gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_FinA, true):set_generated()
@@ -1395,11 +1430,12 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
        gd_tcflag_tr2:set_text("FinB : False")
       end
      end
-     if bit.band(gd_tcflag, 49152) > 0 then
+     if bit.band(gd_tcflag, 49152) > 0 or gd_tcflag_pt.prefs.tcbm_keep0s then
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Rst, true):set_hidden()
       if bit.band(gd_tcflag, 16384) == 16384 then
        gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_RstA, true):set_generated()
        gd_tcflag_tr2:set_text("RstA : True = peer A originated Rst")
+      else
        gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_RstA, false):set_generated()
        gd_tcflag_tr2:set_text("RstA : False")
       end
@@ -1588,6 +1624,15 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
      gd_tcflag_tr2:add(gd_tcstatfl_binfx_A, tcstatfl_bfxA[x_tcstrm().value]):set_generated()
      gd_tcflag_tr2:add(gd_tcstatfl_binfx_B, tcstatfl_bfxB[x_tcstrm().value]):set_generated()
     end
+    if tcstatfl_rtt[x_tcstrm().value] then
+     tcstatfl_rtt[x_tcstrm().value] = math.log(tcstatfl_rtt[x_tcstrm().value]) / math.log(10.0)
+     if tcstatfl_rtt[x_tcstrm().value] < 10 then
+      tcstatfl_rtt[x_tcstrm().value] = tcstatfl_rtt[x_tcstrm().value] * 10.0
+     else
+      tcstatfl_rtt[x_tcstrm().value] = 100.0
+     end
+     gd_tcflag_tr2:add(gd_tcstatfl_rttrat, tcstatfl_rtt[x_tcstrm().value]):set_generated()
+    end
    end
   end
 
@@ -1600,6 +1645,8 @@ register_postdissector(gd_tcflag_pt)
 gd_tcflag_pt.prefs.header = Pref.statictext("<br><b>gd_tcflag</b> preference settings<br>", "")
 
 gd_tcflag_pt.prefs.tcbm = Pref.bool( "Enable TCP flags tracking", true, "Uncheck to disable the subsection")
+gd_tcflag_pt.prefs.tcbm_keep0s = Pref.bool( " » In TCP flags tracking keep unused flags", true, "Uncheck to save screen space")
+
 gd_tcflag_pt.prefs.tcanfl = Pref.bool( "Enable tcp.analysis tracking", true, "Uncheck to disable the subsection")
 gd_tcflag_pt.prefs.tcstatfl = Pref.bool( "Enable TCP statistics tracking", true, "Uncheck to disable the subsection")
 
