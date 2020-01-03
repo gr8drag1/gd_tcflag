@@ -25,6 +25,7 @@
 <tr><th>r21</th><td>Maximum tcp.analysis.duplicate_ack_num added under duplicate Ack</td></tr>
 <tr><th>r22</th><td>Unused fields of TCP bitmap ("[TCBM]") no longer displayed</td></tr>
 <tr><th>r23</th><td>Displaying TCBM unused fields made configurable
+  <br><img src="whatsnew-r23.png">
   <br>RTT/IRTT ratio added to stream flow control tracking</td></tr>
 </tbody>
 </table>
