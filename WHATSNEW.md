@@ -27,5 +27,8 @@
 <tr><th>r23</th><td>Displaying TCBM unused fields made configurable
   <br><img src="whatsnew-r23.png">
   <br>RTT/IRTT ratio added to stream flow control tracking</td></tr>
+ <tr><th>r24</th><td>Aggregate status flags
+  <blockquote>gd_tcflag.tcbm.Syn, gd_tcflag.tcbm.SnA, gd_tcflag.tcbm.Ack, gd_tcflag.tcbm.Dat, gd_tcflag.tcbm.fragment, gd_tcflag.tcbm.End, gd_tcflag.tcbm.Fin, gd_tcflag.tcbm.Rst</blockquote>
+  no longer set by enabling displaying unused fields</td></tr>
 </tbody>
 </table>
