@@ -44,6 +44,11 @@
 -- r22 : Unused fields of TCP bitmap ("[TCBM]") no longer displayed
 -- r23 : Displaying TCBM unused fields made configurable
 --       RTT/IRTT ratio added to stream flow control tracking
+-- r24 : Aggregate status flags
+--        gd_tcflag.tcbm.Syn, gd_tcflag.tcbm.SnA, gd_tcflag.tcbm.Ack,
+--        gd_tcflag.tcbm.Dat, gd_tcflag.tcbm.fragment, gd_tcflag.tcbm.End,
+--        gd_tcflag.tcbm.Fin, gd_tcflag.tcbm.Rst
+--       no longer set by enabling displaying unused fields
 -------------------------------------------------------------------------------
 
 -- Examples https://wiki.wireshark.org/Lua/Examples/PostDissector
@@ -1306,7 +1311,7 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
    local gd_tcflag_tr3
    if gd_tcflag_pt.prefs.tcbm then
     gd_tcflag_tr1 = gd_tcflag_tr0:add(gd_tcflag_bm, gd_tcflag):set_generated()
-    if bit.band(gd_tcflag, 3) > 0 or gd_tcflag_pt.prefs.tcbm_keep0s then
+    if bit.band(gd_tcflag, 3) > 0 then
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Syn, true):set_hidden()
      if bit.band(gd_tcflag, 1) == 1 then
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SynA, true):set_generated()
@@ -1323,8 +1328,13 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SynB, false):set_generated()
       gd_tcflag_tr2:set_text("SynB : False")
      end
+    elseif gd_tcflag_pt.prefs.tcbm_keep0s then
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SynA, false):set_generated()
+     gd_tcflag_tr2:set_text("SynA : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SynB, false):set_generated()
+     gd_tcflag_tr2:set_text("SynB : False")
     end
-    if bit.band(gd_tcflag, 12) > 0 or gd_tcflag_pt.prefs.tcbm_keep0s then
+    if bit.band(gd_tcflag, 12) > 0 then
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnA, true):set_hidden()
      if bit.band(gd_tcflag, 4) == 4 then
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnAA, true):set_generated()
@@ -1340,11 +1350,14 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnAB, false):set_generated()
       gd_tcflag_tr2:set_text("SnAB : False")
      end
+    elseif gd_tcflag_pt.prefs.tcbm_keep0s then
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnAA, false):set_generated()
+     gd_tcflag_tr2:set_text("SnAA : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnAB, false):set_generated()
+     gd_tcflag_tr2:set_text("SnAB : False")
     end
     if bit.band(gd_tcflag, 48) > 0 then
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Ack, true):set_hidden()
-    end
-    if bit.band(gd_tcflag, 48) > 0 or gd_tcflag_pt.prefs.tcbm_keep0s then
      if bit.band(gd_tcflag, 16) == 16 then
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_AckA, true):set_generated()
       gd_tcflag_tr2:set_text("AckA : True = peer A sent empty Ack")
@@ -1359,6 +1372,11 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_AckB, false):set_generated()
       gd_tcflag_tr2:set_text("AckB : False")
      end
+    elseif gd_tcflag_pt.prefs.tcbm_keep0s then
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_AckA, false):set_generated()
+     gd_tcflag_tr2:set_text("AckA : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_AckB, false):set_generated()
+     gd_tcflag_tr2:set_text("AckB : False")
     end
     if bit.band(gd_tcflag, 192) > 0 or gd_tcflag_pt.prefs.tcbm_keep0s then
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Dat, true):set_hidden()
@@ -1376,6 +1394,11 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_DatB, false):set_generated()
       gd_tcflag_tr2:set_text("DatB : False")
      end
+    elseif gd_tcflag_pt.prefs.tcbm_keep0s then
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_DatA, false):set_generated()
+     gd_tcflag_tr2:set_text("DatA : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_DatB, false):set_generated()
+     gd_tcflag_tr2:set_text("DatB : False")
     end
     if bit.band(gd_tcflag, 768) > 0 or gd_tcflag_pt.prefs.tcbm_keep0s then
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500, true):set_hidden()
@@ -1393,6 +1416,11 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500B, false):set_generated()
       gd_tcflag_tr2:set_text("MTUBgt1500 : False")
      end
+    elseif gd_tcflag_pt.prefs.tcbm_keep0s then
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500A, false):set_generated()
+     gd_tcflag_tr2:set_text("MTUAgt1500 : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500B, false):set_generated()
+     gd_tcflag_tr2:set_text("MTUBgt1500 : False")
     end
     if bit.band(gd_tcflag, 3072) > 0 or gd_tcflag_pt.prefs.tcbm_keep0s then
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragment, true):set_hidden()
@@ -1410,6 +1438,11 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragmentB, false):set_generated()
       gd_tcflag_tr2:set_text("fragmentB : False")
      end
+    elseif gd_tcflag_pt.prefs.tcbm_keep0s then
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragmentA, false):set_generated()
+     gd_tcflag_tr2:set_text("fragmentA : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragmentB, false):set_generated()
+     gd_tcflag_tr2:set_text("fragmentB : False")
     end
     if bit.band(gd_tcflag, 61440) > 0 or gd_tcflag_pt.prefs.tcbm_keep0s then
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_End, true):set_hidden()
@@ -1447,6 +1480,15 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
        gd_tcflag_tr2:set_text("RstB : False")
       end
      end
+    elseif gd_tcflag_pt.prefs.tcbm_keep0s then
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_FinA, false):set_generated()
+     gd_tcflag_tr2:set_text("FinA : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_FinB, false):set_generated()
+     gd_tcflag_tr2:set_text("FinB : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_RstA, false):set_generated()
+     gd_tcflag_tr2:set_text("RstA : False")
+     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_RstB, false):set_generated()
+     gd_tcflag_tr2:set_text("RstB : False")
     end
    end
 
