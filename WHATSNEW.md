@@ -29,6 +29,16 @@
   <br>RTT/IRTT ratio added to stream flow control tracking</td></tr>
  <tr><th>r24</th><td>Aggregate status flags:
   <blockquote>gd_tcflag.tcbm.Syn, gd_tcflag.tcbm.SnA, gd_tcflag.tcbm.Ack, gd_tcflag.tcbm.Dat, gd_tcflag.tcbm.fragment, gd_tcflag.tcbm.End, gd_tcflag.tcbm.Fin, gd_tcflag.tcbm.Rst</blockquote>
-  no longer set by the unused fields display option enabled</td></tr>
+  no longer set by the unused fields display option enabled.<br>
+  E. g. a display filter syntax for TCP conversations containing Syn and no data
+  <ul>
+   <li>With <b>keep unused flags</b> set:
+     <blockquote><i>gd_tcflag.tcbm.Syn == 1 && gd_tcflag.tcbm.Dat == 0</i></blockquote>
+   </li>
+   <li>With <b>keep unused flags</b> not set:
+     <blockquote><i>gd_tcflag.tcbm.Syn && ! gd_tcflag.tcbm.Dat</i></blockquote>
+   </li>
+  </ul>
+  </td></tr>
 </tbody>
 </table>
