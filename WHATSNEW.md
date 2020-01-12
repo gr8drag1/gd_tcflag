@@ -31,10 +31,10 @@
   <blockquote>gd_tcflag.tcbm.Syn, gd_tcflag.tcbm.SnA, gd_tcflag.tcbm.Ack, gd_tcflag.tcbm.Dat, gd_tcflag.tcbm.fragment, gd_tcflag.tcbm.End, gd_tcflag.tcbm.Fin, gd_tcflag.tcbm.Rst</blockquote>
   no longer set by enabling the unused fields display option. E. g. a display filter syntax for TCP conversations containing Syn and no data
   <ul>
-   <li>With <b>keep unused flags</b> set:
+   <li>With <b>keep unused flags</b> set (the default behaviour):
      <blockquote><i>gd_tcflag.tcbm.Syn == 1 && gd_tcflag.tcbm.Dat == 0</i></blockquote>
    </li>
-   <li>With <b>keep unused flags</b> not set:
+   <li>With <b>keep unused flags</b> unset:
      <blockquote><i>gd_tcflag.tcbm.Syn && ! gd_tcflag.tcbm.Dat</i></blockquote>
    </li>
   </ul>
