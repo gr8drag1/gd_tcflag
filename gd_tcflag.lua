@@ -51,10 +51,6 @@
 --       no longer set by the unused fields display option enabled
 -------------------------------------------------------------------------------
 
--- Examples https://wiki.wireshark.org/Lua/Examples/PostDissector
--- Lua logical functions http://bitop.luajit.org/
--- TCP analysis flags
--- https://www.wireshark.org/docs/wsug_html_chunked/ChAdvTCPAnalysis.html
 
 local gd_tcflag_pt = Proto("gd_tcflag", "TCP stream tracking")
 
@@ -354,6 +350,7 @@ local tcstatfl_bfxB = {}
 local tcstatfl_rtt = {}
 
 local gd_tcanflmap_ol = {}
+local gd_tc_lastframnr = 0
 
 function gd_tcflag_pt.dissector(tvb, pinfo, root)
 
@@ -361,76 +358,81 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
  local gd_tcflag = 0
  local gd_tcanflmap_nu = 0
 
- if pinfo.number == 1 and not pinfo.visited then
-  tcbm = {}
-  tcanflcn = {}
-  tcanflcn_A = {}
-  tcanflcn_B = {}
-  tcanfl_frtr = {}
-  tcanfl_frtr_A = {}
-  tcanfl_frtr_B = {}
-  tcanfl_ka = {}
-  tcanfl_ka_A = {}
-  tcanfl_ka_B = {}
-  tcanfl_kaa = {}
-  tcanfl_kaa_A = {}
-  tcanfl_kaa_B = {}
-  tcanfl_losg = {}
-  tcanfl_losg_A = {}
-  tcanfl_losg_B = {}
-  tcanfl_ooo = {}
-  tcanfl_ooo_A = {}
-  tcanfl_ooo_B = {}
-  tcanfl_rtr = {}
-  tcanfl_rtr_A = {}
-  tcanfl_rtr_B = {}
-  tcanfl_rusp = {}
-  tcanfl_rusp_A = {}
-  tcanfl_rusp_B = {}
-  tcanfl_srtr = {}
-  tcanfl_srtr_A = {}
-  tcanfl_srtr_B = {}
-  tcanfl_wful = {}
-  tcanfl_wful_A = {}
-  tcanfl_wful_B = {}
-  tcanfl_wupd = {}
-  tcanfl_wupd_A = {}
-  tcanfl_wupd_B = {}
-  tcanfl_dack = {}
-  tcanfl_dack_A = {}
-  tcanfl_dack_A_mx = {}
-  tcanfl_dack_B = {}
-  tcanfl_dack_B_mx = {}
-  tcanfl_zwin = {}
-  tcanfl_zwin_A = {}
-  tcanfl_zwin_B = {}
-  tcanfl_zwp = {}
-  tcanfl_zwp_A = {}
-  tcanfl_zwp_B = {}
-  tcanfl_zwpa = {}
-  tcanfl_zwpa_A = {}
-  tcanfl_zwpa_B = {}
-  tcanfl_akls = {}
-  tcanfl_akls_A = {}
-  tcanfl_akls_B = {}
-  tcstatfl_fc = {}
-  tcstatfl_bc = {}
-  tcstatfl_gnf = {}
-  tcstatfl_gnt = {}
-  tcstatfl_ndf = {}
-  tcstatfl_ndt = {}
-  tcstatfl_fcA = {}
-  tcstatfl_bcA = {}
-  tcstatfl_fcB = {}
-  tcstatfl_bcB = {}
-  tcstatfl_wiA = {}
-  tcstatfl_wxA = {}
-  tcstatfl_wiB = {}
-  tcstatfl_wxB = {}
-  tcstatfl_bfxA = {}
-  tcstatfl_bfxB = {}
-  tcstatfl_rtt = {}
-  gd_tcanflmap_ol = {}
+ if not pinfo.visited then
+  if pinfo.number <= gd_tc_lastframnr then
+   gd_tc_lastframnr = pinfo.number
+   tcbm = {}
+   tcanflcn = {}
+   tcanflcn_A = {}
+   tcanflcn_B = {}
+   tcanfl_frtr = {}
+   tcanfl_frtr_A = {}
+   tcanfl_frtr_B = {}
+   tcanfl_ka = {}
+   tcanfl_ka_A = {}
+   tcanfl_ka_B = {}
+   tcanfl_kaa = {}
+   tcanfl_kaa_A = {}
+   tcanfl_kaa_B = {}
+   tcanfl_losg = {}
+   tcanfl_losg_A = {}
+   tcanfl_losg_B = {}
+   tcanfl_ooo = {}
+   tcanfl_ooo_A = {}
+   tcanfl_ooo_B = {}
+   tcanfl_rtr = {}
+   tcanfl_rtr_A = {}
+   tcanfl_rtr_B = {}
+   tcanfl_rusp = {}
+   tcanfl_rusp_A = {}
+   tcanfl_rusp_B = {}
+   tcanfl_srtr = {}
+   tcanfl_srtr_A = {}
+   tcanfl_srtr_B = {}
+   tcanfl_wful = {}
+   tcanfl_wful_A = {}
+   tcanfl_wful_B = {}
+   tcanfl_wupd = {}
+   tcanfl_wupd_A = {}
+   tcanfl_wupd_B = {}
+   tcanfl_dack = {}
+   tcanfl_dack_A = {}
+   tcanfl_dack_A_mx = {}
+   tcanfl_dack_B = {}
+   tcanfl_dack_B_mx = {}
+   tcanfl_zwin = {}
+   tcanfl_zwin_A = {}
+   tcanfl_zwin_B = {}
+   tcanfl_zwp = {}
+   tcanfl_zwp_A = {}
+   tcanfl_zwp_B = {}
+   tcanfl_zwpa = {}
+   tcanfl_zwpa_A = {}
+   tcanfl_zwpa_B = {}
+   tcanfl_akls = {}
+   tcanfl_akls_A = {}
+   tcanfl_akls_B = {}
+   tcstatfl_fc = {}
+   tcstatfl_bc = {}
+   tcstatfl_gnf = {}
+   tcstatfl_gnt = {}
+   tcstatfl_ndf = {}
+   tcstatfl_ndt = {}
+   tcstatfl_fcA = {}
+   tcstatfl_bcA = {}
+   tcstatfl_fcB = {}
+   tcstatfl_bcB = {}
+   tcstatfl_wiA = {}
+   tcstatfl_wxA = {}
+   tcstatfl_wiB = {}
+   tcstatfl_wxB = {}
+   tcstatfl_bfxA = {}
+   tcstatfl_bfxB = {}
+   tcstatfl_rtt = {}
+   gd_tcanflmap_ol = {}
+  else
+   gd_tc_lastframnr = pinfo.number
+  end
  end
 
  if x_tcp() then
@@ -1312,7 +1314,7 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
    if gd_tcflag_pt.prefs.tcbm then
     gd_tcflag_tr1 = gd_tcflag_tr0:add(gd_tcflag_bm, gd_tcflag):set_generated()
     if bit.band(gd_tcflag, 3) > 0 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Syn, true):set_hidden()
+     gd_tcflag_tr1:add(gd_tcflag_Syn, true):set_hidden()
      if bit.band(gd_tcflag, 1) == 1 then
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SynA, true):set_generated()
       gd_tcflag_tr2:set_text("SynA : True = peer A initiated Syn")
@@ -1321,7 +1323,6 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       gd_tcflag_tr2:set_text("SynA : False")
      end
      if bit.band(gd_tcflag, 2) == 2 then
-      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Syn, true):set_hidden()
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SynB, true):set_generated()
       gd_tcflag_tr2:set_text("SynB : True = peer B initiated Syn")
      else
@@ -1329,13 +1330,14 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       gd_tcflag_tr2:set_text("SynB : False")
      end
     elseif gd_tcflag_pt.prefs.tcbm_keep0s then
+     gd_tcflag_tr1:add(gd_tcflag_Syn, false):set_hidden()
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SynA, false):set_generated()
      gd_tcflag_tr2:set_text("SynA : False")
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SynB, false):set_generated()
      gd_tcflag_tr2:set_text("SynB : False")
     end
     if bit.band(gd_tcflag, 12) > 0 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnA, true):set_hidden()
+     gd_tcflag_tr1:add(gd_tcflag_SnA, true):set_hidden()
      if bit.band(gd_tcflag, 4) == 4 then
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnAA, true):set_generated()
       gd_tcflag_tr2:set_text("SnAA : True = peer A replied with Syn+Ack")
@@ -1351,13 +1353,14 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       gd_tcflag_tr2:set_text("SnAB : False")
      end
     elseif gd_tcflag_pt.prefs.tcbm_keep0s then
+     gd_tcflag_tr1:add(gd_tcflag_SnA, false):set_hidden()
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnAA, false):set_generated()
      gd_tcflag_tr2:set_text("SnAA : False")
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_SnAB, false):set_generated()
      gd_tcflag_tr2:set_text("SnAB : False")
     end
     if bit.band(gd_tcflag, 48) > 0 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Ack, true):set_hidden()
+     gd_tcflag_tr1:add(gd_tcflag_Ack, true):set_hidden()
      if bit.band(gd_tcflag, 16) == 16 then
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_AckA, true):set_generated()
       gd_tcflag_tr2:set_text("AckA : True = peer A sent empty Ack")
@@ -1373,13 +1376,14 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       gd_tcflag_tr2:set_text("AckB : False")
      end
     elseif gd_tcflag_pt.prefs.tcbm_keep0s then
+     gd_tcflag_tr1:add(gd_tcflag_Ack, false):set_hidden()
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_AckA, false):set_generated()
      gd_tcflag_tr2:set_text("AckA : False")
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_AckB, false):set_generated()
      gd_tcflag_tr2:set_text("AckB : False")
     end
     if bit.band(gd_tcflag, 192) > 0 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Dat, true):set_hidden()
+     gd_tcflag_tr1:add(gd_tcflag_Dat, true):set_hidden()
      if bit.band(gd_tcflag, 64) == 64 then
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_DatA, true):set_generated()
       gd_tcflag_tr2:set_text("DatA : True = peer A sent payload")
@@ -1395,13 +1399,14 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       gd_tcflag_tr2:set_text("DatB : False")
      end
     elseif gd_tcflag_pt.prefs.tcbm_keep0s then
+     gd_tcflag_tr1:add(gd_tcflag_Dat, false):set_hidden()
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_DatA, false):set_generated()
      gd_tcflag_tr2:set_text("DatA : False")
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_DatB, false):set_generated()
      gd_tcflag_tr2:set_text("DatB : False")
     end
     if bit.band(gd_tcflag, 768) > 0 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500, true):set_hidden()
+     gd_tcflag_tr1:add(gd_tcflag_MTUgt1500, true):set_hidden()
      if bit.band(gd_tcflag, 256) == 256 then
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500A, true):set_generated()
       gd_tcflag_tr2:set_text("MTUAgt1500 : True = peer A sent IP length > 1500 B")
@@ -1417,13 +1422,14 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       gd_tcflag_tr2:set_text("MTUBgt1500 : False")
      end
     elseif gd_tcflag_pt.prefs.tcbm_keep0s then
+     gd_tcflag_tr1:add(gd_tcflag_MTUgt1500, false):set_hidden()
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500A, false):set_generated()
      gd_tcflag_tr2:set_text("MTUAgt1500 : False")
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_MTUgt1500B, false):set_generated()
      gd_tcflag_tr2:set_text("MTUBgt1500 : False")
     end
     if bit.band(gd_tcflag, 3072) > 0 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragment, true):set_hidden()
+     gd_tcflag_tr1:add(gd_tcflag_fragment, true):set_hidden()
      if bit.band(gd_tcflag, 1024) == 1024 then
       gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragmentA, true):set_generated()
       gd_tcflag_tr2:set_text("fragmentA : True = peer A sent IP fragmented")
@@ -1439,15 +1445,16 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       gd_tcflag_tr2:set_text("fragmentB : False")
      end
     elseif gd_tcflag_pt.prefs.tcbm_keep0s then
+     gd_tcflag_tr1:add(gd_tcflag_fragment, false):set_hidden()
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragmentA, false):set_generated()
      gd_tcflag_tr2:set_text("fragmentA : False")
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_fragmentB, false):set_generated()
      gd_tcflag_tr2:set_text("fragmentB : False")
     end
     if bit.band(gd_tcflag, 61440) > 0 then
-     gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_End, true):set_hidden()
+     gd_tcflag_tr1:add(gd_tcflag_End, true):set_hidden()
      if bit.band(gd_tcflag, 12288) > 0 then
-      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Fin, true):set_hidden()
+      gd_tcflag_tr1:add(gd_tcflag_Fin, true):set_hidden()
       if bit.band(gd_tcflag, 4096) == 4096 then
        gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_FinA, true):set_generated()
        gd_tcflag_tr2:set_text("FinA : True = peer A sent Fin")
@@ -1464,7 +1471,7 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       end
      end
      if bit.band(gd_tcflag, 49152) > 0 then
-      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_Rst, true):set_hidden()
+      gd_tcflag_tr1:add(gd_tcflag_Rst, true):set_hidden()
       if bit.band(gd_tcflag, 16384) == 16384 then
        gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_RstA, true):set_generated()
        gd_tcflag_tr2:set_text("RstA : True = peer A originated Rst")
@@ -1481,6 +1488,9 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       end
      end
     elseif gd_tcflag_pt.prefs.tcbm_keep0s then
+     gd_tcflag_tr1:add(gd_tcflag_End, false):set_hidden()
+     gd_tcflag_tr1:add(gd_tcflag_Fin, false):set_hidden()
+     gd_tcflag_tr1:add(gd_tcflag_Rst, false):set_hidden()
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_FinA, false):set_generated()
      gd_tcflag_tr2:set_text("FinA : False")
      gd_tcflag_tr2 = gd_tcflag_tr1:add(gd_tcflag_FinB, false):set_generated()
