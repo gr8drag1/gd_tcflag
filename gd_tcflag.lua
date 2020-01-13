@@ -469,7 +469,7 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
      gd_tcflag = bit.bor(gd_tcflag, 3072)
     end
    end
-   if x_tclngt() and x_tclngt().value > 0 and not x_tcanka() then
+   if x_tclngt() and x_tclngt().value > 0 and bit.band(x_tcflag().value, 4) == 0 and not x_tcanka() then
     if pinfo.src_port < pinfo.dst_port then
      gd_tcflag = bit.bor(gd_tcflag, 64)
     elseif pinfo.src_port > pinfo.dst_port then
