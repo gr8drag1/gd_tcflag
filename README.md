@@ -194,7 +194,7 @@ Believed fundamental to the architecture of the host code
  <li>In the GUI gd_tcflag values always covers the complete TCP stream and it is immediately possible to see whether the respective TCP stream contained any Syn, data payload, Fin or Rst by looking at any arbitrary TCP segment of the stream</li>
  <li>In the CLI gd_tcflag values may be accumulating over the lifetime of the TCP stream registering new events with only the last TCP segment of the stream is guaranteed to contain the complete record</li>
   <li>In the CLI gd_tcflag values may be accumulating over the lifetime of the TCP stream registering new events with only the last TCP segment of the stream is guaranteed to contain the complete record</li>
- <li>If a packet capture is open in an existing window of Wireshark with a non-empty display filter other than <b>tcp.analysis.flags</b>, then counters of section <b>[TCP analysis flagged]</b> may under-report the actual values until the display filter is changed</li>
+ <li>If a packet capture is being open in an existing window of Wireshark with a non-empty display filter other than <b>tcp.analysis.flags</b>, then counters of section <b>[TCP analysis flagged]</b> may report incorrect values until the display filter is changed</li>
 </ul>
  </li>
  </ul>
