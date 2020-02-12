@@ -51,7 +51,7 @@
 --       no longer set by the unused fields display option enabled
 -- r25 : Code added for handling encapsulated TCP streams
 --       Counters for ICMP added to TCP analysis section
---       Code modified to stay below Lua limitation:
+--       Code rewritten to stay below Lua limitation:
 --
 --   tshark: Lua: syntax error: .... gd_tcflag.lua: too many local variables (limit is 200) in main function
 --
@@ -277,7 +277,6 @@ gd_tcflag_pt.fields = {
 local x_ip = Field.new("ip")
 local x_iplngt = Field.new("ip.len")
 local x_ipfrag = Field.new("ip.flags.mf")
-local x_tcp = Field.new("tcp")
 local x_tcflag = Field.new("tcp.flags")
 local x_tcstrm = Field.new("tcp.stream")
 local x_tcwsiz = Field.new("tcp.window_size")
@@ -468,7 +467,7 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
   end
  end
 
- if x_tcp() then
+ if x_tcstrm() then
 
   local gd_tcflag_tr = {}
 
@@ -1892,15 +1891,15 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
      gd_tcflag_tr[2]:add(gd_tcstatfl_bcnt_r, gd_tcanflmap_nu):set_generated()
     end
     gd_tcflag_tr[2] = gd_tcflag_tr[1]:add(gd_tcstatfl_sub_fc):set_generated()
-    if not (tcstatfl_wiA[x_tcstrm().value] == nil) then
+    if tcstatfl_wiA[x_tcstrm().value] then
      gd_tcflag_tr[2]:add(gd_tcstatfl_wmnsz_A, tcstatfl_wiA[x_tcstrm().value]):set_generated()
      gd_tcflag_tr[2]:add(gd_tcstatfl_wmxsz_A, tcstatfl_wxA[x_tcstrm().value]):set_generated()
     end
-    if not (tcstatfl_wiB[x_tcstrm().value] == nil) then
+    if tcstatfl_wiB[x_tcstrm().value] then
      gd_tcflag_tr[2]:add(gd_tcstatfl_wmnsz_B, tcstatfl_wiB[x_tcstrm().value]):set_generated()
      gd_tcflag_tr[2]:add(gd_tcstatfl_wmxsz_B, tcstatfl_wxB[x_tcstrm().value]):set_generated()
     end
-    if not ((tcstatfl_wiA[x_tcstrm().value] == nil) or (tcstatfl_wiB[x_tcstrm().value] == nil)) then
+    if tcstatfl_wiA[x_tcstrm().value] and tcstatfl_wiB[x_tcstrm().value] then
      if tcstatfl_wiA[x_tcstrm().value] == 0 or tcstatfl_wiB[x_tcstrm().value] == 0 then
       gd_tcanflmap_nu = 100.0
      else
