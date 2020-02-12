@@ -41,7 +41,7 @@
   </td></tr>
 <tr><th>r25</th><td>Code added for handling encapsulated TCP streams<br>
   Counters for ICMP added to TCP analysis section<br>
-  Code modified to stay below Lua limitation:<br>
+  Code rewritten to stay below Lua limitation:<br>
   <blockquote>tshark: Lua: syntax error: .... gd_tcflag.lua: too many local variables (limit is 200) in main function</blockquote></td></td>
 </tbody>
 </table>
