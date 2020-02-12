@@ -50,7 +50,7 @@
 --        gd_tcflag.tcbm.Fin, gd_tcflag.tcbm.Rst
 --       no longer set by the unused fields display option enabled
 -- r25 : Code added for handling encapsulated TCP streams
---       counters for ICMP added to TCP analtsis section
+--       Counters for ICMP added to TCP analysis section
 --       Code modified to stay below Lua limitation:
 --
 --   tshark: Lua: syntax error: .... gd_tcflag.lua: too many local variables (limit is 200) in main function
@@ -895,7 +895,9 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
      gd_tcanflmap_nu = bit.bor(gd_tcanflmap_nu, 16384)
     end
 
-    if gd_tcanflmap_ol[pinfo.number] > 0 then
+    if not gd_tcanflmap_ol[pinfo.number] then
+     gd_tcanflmap_ol[pinfo.number] = 0
+    elseif gd_tcanflmap_ol[pinfo.number] > 0 then
      if gd_tcanflmap_nu == 0 and tcanflcn[x_tcstrm().value] > 0 then
       tcanflcn[x_tcstrm().value] = tcanflcn[x_tcstrm().value] - 1
       if pinfo.src_port <  pinfo.dst_port then
