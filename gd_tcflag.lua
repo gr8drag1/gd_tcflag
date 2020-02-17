@@ -51,6 +51,11 @@
 --       no longer set by the unused fields display option enabled
 -- r25 : Code added for handling encapsulated TCP streams
 --       Counters for ICMP added to TCP analysis section
+--
+--        If ICMP truncates the TCP header, then the TCP dissector may not
+--        associated the header with the TCP stream
+--        https://bugs.wireshark.org/bugzilla/show_bug.cgi?id=16396
+--
 --       Code rewritten to stay below Lua limitation:
 --
 --   tshark: Lua: syntax error: .... gd_tcflag.lua: too many local variables (limit is 200) in main function
