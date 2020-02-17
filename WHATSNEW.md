@@ -39,9 +39,13 @@
    </li>
   </ul>
   </td></tr>
-<tr><th>r25</th><td>Code added for handling encapsulated TCP streams<br>
-  Counters for ICMP added to TCP analysis section<br>
-  Code rewritten to stay below Lua limitation:<br>
+<tr><th>r25</th><td>
+  <ul>
+  <li>Code added for handling encapsulated TCP streams</li>
+  <li>Counters for ICMP added to TCP analysis section<br>It's worth mentioning that if ICMP truncates the TCP header, then the TCP dissector may not associated the header with the TCP stream <a href="https://bugs.wireshark.org/bugzilla/show_bug.cgi?id=16396">Bug 16396</a>. As long as no TCP stream number is available, this plug-in will not be able to count the ICMP message against the TCP stream</li>
+  <li>Code rewritten to stay below Lua limitation:</li>
   <blockquote>tshark: Lua: syntax error: .... gd_tcflag.lua: too many local variables (limit is 200) in main function</blockquote></td></td>
+  </li>
+  </ul>
 </tbody>
 </table>
