@@ -51,6 +51,8 @@
 --       no longer set by the unused fields display option enabled
 -- r25 : Code added for handling encapsulated TCP streams
 --       Counters for ICMP added to TCP analysis section
+-- r26 : Maximum RTT changed to per direction
+--       Corrections to maximum bytes in flight tracking
 --
 --        If ICMP truncates the TCP header, then the TCP dissector may not
 --        associated the header with the TCP stream
@@ -59,6 +61,8 @@
 --       Code rewritten to stay below Lua limitation:
 --
 --   tshark: Lua: syntax error: .... gd_tcflag.lua: too many local variables (limit is 200) in main function
+-- r26 : Cosmetic improvements preventing the plugin from reporting errors when
+--        tshark is run without "-2"
 --
 -------------------------------------------------------------------------------
 
@@ -144,9 +148,9 @@ local gd_tcanfl_cn_zwin_B = ProtoField.new("Analysis zero window B", "gd_tcflag.
 local gd_tcanfl_cn_zwp = ProtoField.new("Analysis zero window probe", "gd_tcflag.tcanflcn.zero_window_probe", ftypes.UINT32)
 local gd_tcanfl_cn_zwp_A = ProtoField.new("Analysis zero window probe A", "gd_tcflag.tcanflcn.zero_window_probe_A", ftypes.UINT32)
 local gd_tcanfl_cn_zwp_B = ProtoField.new("Analysis zero window probe B", "gd_tcflag.tcanflcn.zero_window_probe_B", ftypes.UINT32)
-local gd_tcanfl_cn_zwpa = ProtoField.new("Analysis zero window probe ack", "gd_tcflag.tcanflcn.zero_window_probe_ack", ftypes.UINT32)
-local gd_tcanfl_cn_zwpa_A = ProtoField.new("Analysis zero window probe ack A", "gd_tcflag.tcanflcn.zero_window_probe_ack_A", ftypes.UINT32)
-local gd_tcanfl_cn_zwpa_B = ProtoField.new("Analysis zero window probe ack B", "gd_tcflag.tcanflcn.zero_window_probe_ack_B", ftypes.UINT32)
+local gd_tcanfl_cn_zwpa = ProtoField.new("Analysis zero window probe Ack", "gd_tcflag.tcanflcn.zero_window_probe_ack", ftypes.UINT32)
+local gd_tcanfl_cn_zwpa_A = ProtoField.new("Analysis zero window probe Ack A", "gd_tcflag.tcanflcn.zero_window_probe_ack_A", ftypes.UINT32)
+local gd_tcanfl_cn_zwpa_B = ProtoField.new("Analysis zero window probe Ack B", "gd_tcflag.tcanflcn.zero_window_probe_ack_B", ftypes.UINT32)
 local gd_tcanfl_cn_akls = ProtoField.new("Analysis lost segment Ack", "gd_tcflag.tcanflcn.ack_lost_segment", ftypes.UINT32)
 local gd_tcanfl_cn_akls_A = ProtoField.new("Analysis lost segment Ack A", "gd_tcflag.tcanflcn.ack_lost_segment_A", ftypes.UINT32)
 local gd_tcanfl_cn_akls_B = ProtoField.new("Analysis lost segment Ack B", "gd_tcflag.tcanflcn.ack_lost_segment_B", ftypes.UINT32)
@@ -175,6 +179,8 @@ local gd_tcstatfl_wmxsz_B = ProtoField.new("Maximum win from B", "gd_tcflag.tcst
 local gd_tcstatfl_wmxrat = ProtoField.new("Highest win max/min, 0..100 dB", "gd_tcflag.tcstatfl.fc.winsizratio", ftypes.FLOAT)
 local gd_tcstatfl_binfx_A = ProtoField.new("Maximum bytes in flight from A", "gd_tcflag.tcstatfl.fc.byteinflmax_A", ftypes.UINT32)
 local gd_tcstatfl_binfx_B = ProtoField.new("Maximum bytes in flight from B", "gd_tcflag.tcstatfl.fc.byteinflmax_B", ftypes.UINT32)
+local gd_tcstatfl_rttmx_A = ProtoField.new("Highest RTT from A", "gd_tcflag.tcstatfl.fc.rttmax_A", ftypes.FLOAT)
+local gd_tcstatfl_rttmx_B = ProtoField.new("Highest RTT from B", "gd_tcflag.tcstatfl.fc.rttmax_B", ftypes.FLOAT)
 local gd_tcstatfl_rttrat = ProtoField.new("Highest RTT/IRTT, 0..100 dB", "gd_tcflag.tcstatfl.fc.rttratio", ftypes.FLOAT)
 
 gd_tcflag_pt.fields = {
@@ -276,6 +282,8 @@ gd_tcflag_pt.fields = {
  gd_tcstatfl_wmxsz_B,
  gd_tcstatfl_binfx_A,
  gd_tcstatfl_binfx_B,
+ gd_tcstatfl_rttmx_A,
+ gd_tcstatfl_rttmx_B,
  gd_tcstatfl_rttrat
 }
 
@@ -378,7 +386,8 @@ local tcstatfl_wiB = {}
 local tcstatfl_wxB = {}
 local tcstatfl_bfxA = {}
 local tcstatfl_bfxB = {}
-local tcstatfl_rtt = {}
+local tcstatfl_rtxA = {}
+local tcstatfl_rtxB = {}
 
 local gd_tcanflmap_ol = {}
 local gd_icmptype_ol = {}
@@ -464,7 +473,8 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
    tcstatfl_wxB = {}
    tcstatfl_bfxA = {}
    tcstatfl_bfxB = {}
-   tcstatfl_rtt = {}
+   tcstatfl_rtxA = {}
+   tcstatfl_rtxB = {}
    gd_tcanflmap_ol = {}
    gd_icmptype_ol = {}
   else
@@ -693,12 +703,21 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       tcstatfl_bcB[x_tcstrm().value] = 0
       tcstatfl_wiA[x_tcstrm().value] = x_tcwsiz().value
       tcstatfl_wxA[x_tcstrm().value] = x_tcwsiz().value
-      if x_tcanbinfl() then
-       tcstatfl_bfxA[x_tcstrm().value] = x_tcanbinfl().value
+      if x_tcanbinf() then
+       tcstatfl_bfxA[x_tcstrm().value] = x_tcanbinf().value
       else
        tcstatfl_bfxA[x_tcstrm().value] = 0
       end
       tcstatfl_bfxB[x_tcstrm().value] = 0
+      if x_tccrtt() and x_tccrtt().value then
+       if tcstatfl_rtxA[x_tcstrm().value] then
+        if tcstatfl_rtxA[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value))() then
+         tcstatfl_rtxA[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+        end
+       else
+        tcstatfl_rtxA[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+       end
+      end
      elseif pinfo.src_port > pinfo.dst_port then
       tcstatfl_fcA[x_tcstrm().value] = 0
       tcstatfl_bcA[x_tcstrm().value] = 0
@@ -715,6 +734,15 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
        tcstatfl_bfxB[x_tcstrm().value] = x_tcanbinf().value
       else
        tcstatfl_bfxB[x_tcstrm().value] = 0
+      end
+      if x_tccrtt() and x_tccrtt().value then
+       if tcstatfl_rtxB[x_tcstrm().value] then
+        if tcstatfl_rtxB[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value))() then
+         tcstatfl_rtxB[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+        end
+       else
+        tcstatfl_rtxB[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+       end
       end
      elseif pinfo.net_src < pinfo.net_dst then
       tcstatfl_fcA[x_tcstrm().value] = 1
@@ -733,6 +761,15 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
        tcstatfl_bfxA[x_tcstrm().value] = 0
       end
       tcstatfl_bfxB[x_tcstrm().value] = 0
+      if x_tccrtt() and x_tccrtt().value then
+       if tcstatfl_rtxA[x_tcstrm().value] then
+        if tcstatfl_rtxA[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value))() then
+         tcstatfl_rtxA[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+        end
+       else
+        tcstatfl_rtxA[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+       end
+      end
      elseif pinfo.net_src > pinfo.net_dst then
       tcstatfl_fcA[x_tcstrm().value] = 0
       tcstatfl_bcA[x_tcstrm().value] = 0
@@ -750,6 +787,15 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       else
        tcstatfl_bfxB[x_tcstrm().value] = 0
       end
+      if x_tccrtt() and x_tccrtt().value then
+       if tcstatfl_rtxB[x_tcstrm().value] then
+        if tcstatfl_rtxB[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value))() then
+         tcstatfl_rtxB[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+        end
+       else
+        tcstatfl_rtxB[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+       end
+      end
      end
     else
      tcstatfl_fc[x_tcstrm().value] = tcstatfl_fc[x_tcstrm().value] + 1
@@ -766,7 +812,7 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
      if pinfo.src_port < pinfo.dst_port then
       tcstatfl_fcA[x_tcstrm().value] = tcstatfl_fcA[x_tcstrm().value] + 1
       tcstatfl_bcA[x_tcstrm().value] = tcstatfl_bcA[x_tcstrm().value] + x_tclngt().value
-      if tcstatfl_bfxA[x_tcstrm().value] < x_tcanbinf().value then
+      if x_tcanbinf() and tcstatfl_bfxA[x_tcstrm().value] < x_tcanbinf().value then
        tcstatfl_bfxA[x_tcstrm().value] = x_tcanbinf().value
       end
       if bit.band(x_tcflag().value, 4) == 0 then
@@ -779,12 +825,21 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
        else
         tcstatfl_wiA[x_tcstrm().value] = x_tcwsiz().value
         tcstatfl_wxA[x_tcstrm().value] = x_tcwsiz().value
+       end
+      end
+      if x_tccrtt() and x_tccrtt().value then
+       if tcstatfl_rtxA[x_tcstrm().value] then
+        if tcstatfl_rtxA[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value))() then
+         tcstatfl_rtxA[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+        end
+       else
+        tcstatfl_rtxA[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
        end
       end
      elseif pinfo.src_port > pinfo.dst_port then
       tcstatfl_fcB[x_tcstrm().value] = tcstatfl_fcB[x_tcstrm().value] + 1
       tcstatfl_bcB[x_tcstrm().value] = tcstatfl_bcB[x_tcstrm().value] + x_tclngt().value
-      if tcstatfl_bfxB[x_tcstrm().value] < x_tcanbinf().value then
+      if x_tcanbinf() and tcstatfl_bfxB[x_tcstrm().value] < x_tcanbinf().value then
        tcstatfl_bfxB[x_tcstrm().value] = x_tcanbinf().value
       end
       if bit.band(x_tcflag().value, 4) == 0 then
@@ -799,10 +854,19 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
         tcstatfl_wxB[x_tcstrm().value] = x_tcwsiz().value
        end
       end
+      if x_tccrtt() and x_tccrtt().value then
+       if tcstatfl_rtxB[x_tcstrm().value] then
+        if tcstatfl_rtxB[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value))() then
+         tcstatfl_rtxB[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+        end
+       else
+        tcstatfl_rtxB[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+       end
+      end
      elseif pinfo.net_src < pinfo.net_dst then
       tcstatfl_fcA[x_tcstrm().value] = tcstatfl_fcA[x_tcstrm().value] + 1
       tcstatfl_bcA[x_tcstrm().value] = tcstatfl_bcA[x_tcstrm().value] + x_tclngt().value
-      if tcstatfl_bfxA[x_tcstrm().value] < x_tcanbinf().value then
+      if x_tcanbinf() and tcstatfl_bfxA[x_tcstrm().value] < x_tcanbinf().value then
        tcstatfl_bfxA[x_tcstrm().value] = x_tcanbinf().value
       end
       if bit.band(x_tcflag().value, 4) == 0 then
@@ -817,10 +881,19 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
         tcstatfl_wxA[x_tcstrm().value] = x_tcwsiz().value
        end
       end
+      if x_tccrtt() and x_tccrtt().value then
+       if tcstatfl_rtxA[x_tcstrm().value] then
+        if tcstatfl_rtxA[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value))() then
+         tcstatfl_rtxA[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+        end
+       else
+        tcstatfl_rtxA[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+       end
+      end
      elseif pinfo.net_src > pinfo.net_dst then
       tcstatfl_fcB[x_tcstrm().value] = tcstatfl_fcB[x_tcstrm().value] + 1
       tcstatfl_bcB[x_tcstrm().value] = tcstatfl_bcB[x_tcstrm().value] + x_tclngt().value
-      if tcstatfl_bfxB[x_tcstrm().value] < x_tcanbinf().value then
+      if x_tcanbinf() and tcstatfl_bfxB[x_tcstrm().value] < x_tcanbinf().value then
        tcstatfl_bfxB[x_tcstrm().value] = x_tcanbinf().value
       end
       if bit.band(x_tcflag().value, 4) == 0 then
@@ -835,18 +908,14 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
         tcstatfl_wxB[x_tcstrm().value] = x_tcwsiz().value
        end
       end
-     end
-    end
-   end
-   if gd_tcflag_pt.prefs.tcstatfl then
-    if x_tcirtt() and x_tccrtt() and x_tcirtt().value and x_tccrtt().value then
-     if loadstring("return " .. tostring(x_tcirtt().value))() > 0 and loadstring("return " .. tostring(x_tccrtt().value))() >= loadstring("return " .. tostring(x_tcirtt().value))() then
-      if tcstatfl_rtt[x_tcstrm().value] then
-       if tcstatfl_rtt[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value) .. "/" .. tostring(x_tcirtt().value))() then
-        tcstatfl_rtt[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value) .. "/" .. tostring(x_tcirtt().value))()
+      if x_tccrtt() and x_tccrtt().value then
+       if tcstatfl_rtxB[x_tcstrm().value] then
+        if tcstatfl_rtxB[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value))() then
+         tcstatfl_rtxB[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+        end
+       else
+        tcstatfl_rtxB[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
        end
-      else
-       tcstatfl_rtt[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value) .. "/" .. tostring(x_tcirtt().value))()
       end
      end
     end
@@ -1428,12 +1497,21 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
        tcstatfl_bcB[x_tcstrm().value] = 0
        tcstatfl_wiA[x_tcstrm().value] = x_tcwsiz().value
        tcstatfl_wxA[x_tcstrm().value] = x_tcwsiz().value
-       if x_tcanbinfl() then
-        tcstatfl_bfxA[x_tcstrm().value] = x_tcanbinfl().value
+       if x_tcanbinf() then
+        tcstatfl_bfxA[x_tcstrm().value] = x_tcanbinf().value
        else
         tcstatfl_bfxA[x_tcstrm().value] = 0
        end
        tcstatfl_bfxB[x_tcstrm().value] = 0
+       if x_tccrtt() and x_tccrtt().value then
+        if tcstatfl_rtxA[x_tcstrm().value] then
+         if tcstatfl_rtxA[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value))() then
+          tcstatfl_rtxA[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+         end
+        else
+         tcstatfl_rtxA[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+        end
+       end
       elseif pinfo.src_port > pinfo.dst_port then
        tcstatfl_fcA[x_tcstrm().value] = 0
        tcstatfl_bcA[x_tcstrm().value] = 0
@@ -1446,6 +1524,15 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
         tcstatfl_bfxB[x_tcstrm().value] = x_tcanbinf().value
        else
         tcstatfl_bfxB[x_tcstrm().value] = 0
+       end
+       if x_tccrtt() and x_tccrtt().value then
+        if tcstatfl_rtxB[x_tcstrm().value] then
+         if tcstatfl_rtxB[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value))() then
+          tcstatfl_rtxB[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+         end
+        else
+         tcstatfl_rtxB[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+        end
        end
       elseif pinfo.net_src < pinfo.net_dst then
        tcstatfl_fcA[x_tcstrm().value] = 1
@@ -1460,6 +1547,15 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
         tcstatfl_bfxA[x_tcstrm().value] = 0
        end
        tcstatfl_bfxB[x_tcstrm().value] = 0
+       if x_tccrtt() and x_tccrtt().value then
+        if tcstatfl_rtxA[x_tcstrm().value] then
+         if tcstatfl_rtxA[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value))() then
+          tcstatfl_rtxA[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+         end
+        else
+         tcstatfl_rtxA[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+        end
+       end
       elseif pinfo.net_src > pinfo.net_dst then
        tcstatfl_fcA[x_tcstrm().value] = 0
        tcstatfl_bcA[x_tcstrm().value] = 0
@@ -1473,6 +1569,15 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
        else
         tcstatfl_bfxB[x_tcstrm().value] = 0
        end
+       if x_tccrtt() and x_tccrtt().value then
+        if tcstatfl_rtxB[x_tcstrm().value] then
+         if tcstatfl_rtxB[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value))() then
+          tcstatfl_rtxB[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+         end
+        else
+         tcstatfl_rtxB[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+        end
+       end
       end
      else
       tcstatfl_bc[x_tcstrm().value] = 0
@@ -1485,12 +1590,21 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
         tcstatfl_wiA[x_tcstrm().value] = x_tcwsiz().value
         tcstatfl_wxA[x_tcstrm().value] = x_tcwsiz().value
        end
-       if x_tcanbinfl() then
-        tcstatfl_bfxA[x_tcstrm().value] = x_tcanbinfl().value
+       if x_tcanbinf() then
+        tcstatfl_bfxA[x_tcstrm().value] = x_tcanbinf().value
        else
         tcstatfl_bfxA[x_tcstrm().value] = 0
        end
        tcstatfl_bfxB[x_tcstrm().value] = 0
+       if x_tccrtt() and x_tccrtt().value then
+        if tcstatfl_rtxA[x_tcstrm().value] then
+         if tcstatfl_rtxA[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value))() then
+          tcstatfl_rtxA[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+         end
+        else
+         tcstatfl_rtxA[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+        end
+       end
       elseif pinfo.src_port > pinfo.dst_port then
        tcstatfl_fcA[x_tcstrm().value] = 0
        tcstatfl_fcB[x_tcstrm().value] = 1
@@ -1503,6 +1617,15 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
         tcstatfl_bfxB[x_tcstrm().value] = x_tcanbinf().value
        else
         tcstatfl_bfxB[x_tcstrm().value] = 0
+       end
+       if x_tccrtt() and x_tccrtt().value then
+        if tcstatfl_rtxB[x_tcstrm().value] then
+         if tcstatfl_rtxB[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value))() then
+          tcstatfl_rtxB[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+         end
+        else
+         tcstatfl_rtxB[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+        end
        end
       elseif pinfo.net_src < pinfo.net_dst then
        tcstatfl_fcA[x_tcstrm().value] = 1
@@ -1517,6 +1640,15 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
         tcstatfl_bfxA[x_tcstrm().value] = 0
        end
        tcstatfl_bfxB[x_tcstrm().value] = 0
+       if x_tccrtt() and x_tccrtt().value then
+        if tcstatfl_rtxA[x_tcstrm().value] then
+         if tcstatfl_rtxA[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value))() then
+          tcstatfl_rtxA[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+         end
+        else
+         tcstatfl_rtxA[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+        end
+       end
       elseif pinfo.net_src > pinfo.net_dst then
        tcstatfl_fcA[x_tcstrm().value] = 0
        tcstatfl_fcB[x_tcstrm().value] = 1
@@ -1530,18 +1662,25 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
        else
         tcstatfl_bfxB[x_tcstrm().value] = 0
        end
+       if x_tccrtt() and x_tccrtt().value then
+        if tcstatfl_rtxB[x_tcstrm().value] then
+         if tcstatfl_rtxB[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value))() then
+          tcstatfl_rtxB[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+         end
+        else
+         tcstatfl_rtxB[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
+        end
+       end
       end
      end
     end
-    if x_tcirtt() and x_tccrtt() and x_tcirtt().value and x_tccrtt().value then
-     if loadstring("return " .. tostring(x_tcirtt().value))() > 0 and loadstring("return " .. tostring(x_tccrtt().value))() >= loadstring("return " .. tostring(x_tcirtt().value))() then
-      if tcstatfl_rtt[x_tcstrm().value] then
-       if tcstatfl_rtt[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value) .. "/" .. tostring(x_tcirtt().value))() then
-        tcstatfl_rtt[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value) .. "/" .. tostring(x_tcirtt().value))()
-       end
-      else
-       tcstatfl_rtt[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value) .. "/" .. tostring(x_tcirtt().value))()
+    if x_tccrtt() and x_tccrtt().value then
+     if tcstatfl_rttx[x_tcstrm().value] then
+      if tcstatfl_rttx[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value))() then
+       tcstatfl_rttx[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
       end
+     else
+      tcstatfl_rttx[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
      end
     end
    end
@@ -1921,18 +2060,32 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
      end
      gd_tcflag_tr[2]:add(gd_tcstatfl_wmxrat, gd_tcanflmap_nu):set_generated()
     end
-    if tcstatfl_bfxA[x_tcstrm().value] and tcstatfl_bfxB[x_tcstrm().value] then
+    if tcstatfl_bfxA[x_tcstrm().value] then
      gd_tcflag_tr[2]:add(gd_tcstatfl_binfx_A, tcstatfl_bfxA[x_tcstrm().value]):set_generated()
+    end
+    if tcstatfl_bfxB[x_tcstrm().value] then
      gd_tcflag_tr[2]:add(gd_tcstatfl_binfx_B, tcstatfl_bfxB[x_tcstrm().value]):set_generated()
     end
-    if tcstatfl_rtt[x_tcstrm().value] then
-     tcstatfl_rtt[x_tcstrm().value] = math.log(tcstatfl_rtt[x_tcstrm().value]) / math.log(10.0)
-     if tcstatfl_rtt[x_tcstrm().value] < 10 then
-      tcstatfl_rtt[x_tcstrm().value] = tcstatfl_rtt[x_tcstrm().value] * 10.0
-     else
-      tcstatfl_rtt[x_tcstrm().value] = 100.0
+    if tcstatfl_rtxA[x_tcstrm().value] then
+     gd_tcflag_tr[2]:add(gd_tcstatfl_rttmx_A, tcstatfl_rtxA[x_tcstrm().value]):set_generated()
+    end
+    if tcstatfl_rtxB[x_tcstrm().value] then
+     gd_tcflag_tr[2]:add(gd_tcstatfl_rttmx_B, tcstatfl_rtxB[x_tcstrm().value]):set_generated()
+    end
+    if (x_tcirtt() and x_tcirtt().value and loadstring("return " .. tostring(x_tcirtt().value))() > 0) and (tcstatfl_rtxA[x_tcstrm().value] or tcstatfl_rtxB[x_tcstrm().value]) then
+     if tcstatfl_rtxA[x_tcstrm().value] < tcstatfl_rtxB[x_tcstrm().value] then
+      tcstatfl_rtxA[x_tcstrm().value] = tcstatfl_rtxB[x_tcstrm().value]
      end
-     gd_tcflag_tr[2]:add(gd_tcstatfl_rttrat, tcstatfl_rtt[x_tcstrm().value]):set_generated()
+     if tcstatfl_rtxA[x_tcstrm().value] >= loadstring("return " .. tostring(x_tcirtt().value))() then
+      tcstatfl_rtxA[x_tcstrm().value] = tcstatfl_rtxA[x_tcstrm().value] /loadstring("return " .. tostring(x_tcirtt().value))()
+      tcstatfl_rtxA[x_tcstrm().value] = math.log(tcstatfl_rtxA[x_tcstrm().value]) / math.log(10.0)
+      if tcstatfl_rtxA[x_tcstrm().value] < 10 then
+       tcstatfl_rtxA[x_tcstrm().value] = tcstatfl_rtxA[x_tcstrm().value] * 10.0
+      else
+       tcstatfl_rtxA[x_tcstrm().value] = 100.0
+      end
+      gd_tcflag_tr[2]:add(gd_tcstatfl_rttrat, tcstatfl_rtxA[x_tcstrm().value]):set_generated()
+     end
     end
    end
   end
