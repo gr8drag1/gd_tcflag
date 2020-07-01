@@ -1674,15 +1674,6 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
       end
      end
     end
-    if x_tccrtt() and x_tccrtt().value then
-     if tcstatfl_rttx[x_tcstrm().value] then
-      if tcstatfl_rttx[x_tcstrm().value] < loadstring("return " .. tostring(x_tccrtt().value))() then
-       tcstatfl_rttx[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
-      end
-     else
-      tcstatfl_rttx[x_tcstrm().value] = loadstring("return " .. tostring(x_tccrtt().value))()
-     end
-    end
    end
   end
 
