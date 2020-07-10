@@ -49,6 +49,10 @@
 <td><ul>
   <li>Maximum RTT changed to per direction</li>
   <li>Corrections to maximum bytes in flight tracking</li>
-</ul></td></tr>
+  <li>If ICMP truncates the TCP header, then the TCP dissector may not associated the header with the TCP stream https://bugs.wireshark.org/bugzilla/show_bug.cgi?id=16396</li>
+  <li>Code rewritten to stay below Lua limitation:<br>
+ tshark: Lua: syntax error: .... gd_tcflag.lua: too many local variables (limit is 200) in main function</li></ul></td><tr>
+<tr><th>r27</th>
+<td>Cosmetic improvements preventing the plugin from reporting errors when tshark is run without "-2"</td></tr>
 </tbody>
 </table>
