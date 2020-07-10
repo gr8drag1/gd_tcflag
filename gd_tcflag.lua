@@ -61,7 +61,7 @@
 --       Code rewritten to stay below Lua limitation:
 --
 --   tshark: Lua: syntax error: .... gd_tcflag.lua: too many local variables (limit is 200) in main function
--- r26 : Cosmetic improvements preventing the plugin from reporting errors when
+-- r27 : Cosmetic improvements preventing the plugin from reporting errors when
 --        tshark is run without "-2"
 --
 -------------------------------------------------------------------------------
