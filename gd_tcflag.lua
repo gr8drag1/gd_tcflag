@@ -2064,7 +2064,7 @@ function gd_tcflag_pt.dissector(tvb, pinfo, root)
      gd_tcflag_tr[2]:add(gd_tcstatfl_rttmx_B, tcstatfl_rtxB[x_tcstrm().value]):set_generated()
     end
     if (x_tcirtt() and x_tcirtt().value and loadstring("return " .. tostring(x_tcirtt().value))() > 0) and (tcstatfl_rtxA[x_tcstrm().value] or tcstatfl_rtxB[x_tcstrm().value]) then
-     if (not tcstatfl_rtxA[x_tcstrm().value]) or (tcstatfl_rtxA[x_tcstrm().value] < tcstatfl_rtxB[x_tcstrm().value]) then
+     if (not tcstatfl_rtxA[x_tcstrm().value]) or (tcstatfl_rtxB[x_tcstrm().value] and (tcstatfl_rtxA[x_tcstrm().value] < tcstatfl_rtxB[x_tcstrm().value])) then
       tcstatfl_rtxA[x_tcstrm().value] = tcstatfl_rtxB[x_tcstrm().value]
      end
      if tcstatfl_rtxA[x_tcstrm().value] >= loadstring("return " .. tostring(x_tcirtt().value))() then
